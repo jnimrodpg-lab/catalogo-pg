@@ -85,15 +85,6 @@
             <button class="scan-btn" id="btnScanFake" type="button">Escanear código</button>
             <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Buscar por categoría</button>
           </div>
-          <div class="applied-filters-panel" id="appliedFiltersPanel">
-            <div class="applied-filters-head">
-              <span>Filtros aplicados</span>
-              <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
-            </div>
-            <div class="applied-filters-list" id="appliedFiltersList">
-              <span class="applied-filter-empty">Sin filtros activos</span>
-            </div>
-          </div>
           <div class="filter-row compact-filters hidden" aria-hidden="true">
             <select id="filterBrand"><option value="">Todas las marcas</option></select>
             <select id="filterCategory"><option value="">Todas las categorías</option></select>
@@ -105,6 +96,15 @@
 
         <div class="product-client-stage glass-panel model-one-board">
           <div class="groups-panel">
+            <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
+              <div class="applied-filters-head">
+                <span>Filtros aplicados</span>
+                <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
+              </div>
+              <div class="applied-filters-list" id="appliedFiltersList">
+                <span class="applied-filter-empty">Sin filtros activos</span>
+              </div>
+            </div>
             <div class="result-summary-row model-one-summary">
               <span id="resultSummary">Mostrando 0 productos</span>
               <span id="pageSummary">Página 1</span>
@@ -176,34 +176,26 @@
             <button type="button" class="category-audience-chip" data-audience="bebe">Bebé</button>
             <button type="button" class="category-audience-chip" data-audience="unisex">Unisex</button>
           </div>
-          <div class="category-browser-grid" id="categoryBrowserGrid"></div>
-          <div class="category-quick-filters">
+          <div class="category-browser-toolbar" id="categoryBrowserToolbar"></div>
+          <div class="category-browser-filter-toggle-row">
+            <button class="ghost-btn category-filter-toggle" id="btnToggleCategoryFilters" type="button" aria-expanded="false">Mostrar filtros</button>
+          </div>
+          <div class="category-quick-filters is-collapsed" id="categoryQuickFilters" aria-hidden="true">
             <div class="category-quick-filters-head">
               <h3>Filtros rápidos</h3>
-              <p>Refina por marca, talla, color y otras opciones.</p>
+              <p>Refina solo con lo esencial: marca, talla y color.</p>
             </div>
             <div class="category-quick-selects">
               <label><span>Marca</span><select id="categoryQuickBrand"><option value="">Seleccionar</option></select></label>
               <label><span>Talla</span><select id="categoryQuickSize"><option value="">Seleccionar</option></select></label>
               <label><span>Color</span><select id="categoryQuickColor"><option value="">Seleccionar</option></select></label>
-              <label><span>Almacén</span><select id="categoryQuickWarehouse"><option value="">Seleccionar</option></select></label>
-              <label><span>Imagen</span><select id="categoryQuickImage"><option value="">Todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select></label>
-            </div>
-            <div class="category-quick-chip-groups">
-              <div class="quick-chip-group">
-                <span class="quick-chip-title">Marcas destacadas</span>
-                <div class="quick-chip-row" id="quickBrandChips"></div>
-              </div>
-              <div class="quick-chip-group">
-                <span class="quick-chip-title">Colores</span>
-                <div class="quick-chip-row" id="quickColorChips"></div>
-              </div>
             </div>
             <div class="category-quick-actions">
               <button class="ghost-btn" id="btnResetQuickFilters" type="button">Limpiar</button>
               <button class="scan-btn" id="btnApplyQuickFilters" type="button">Aplicar filtros</button>
             </div>
           </div>
+          <div class="category-browser-grid" id="categoryBrowserGrid"></div>
         </div>
       </section>
       <section class="sheet-view view" id="viewSheet">

@@ -235,7 +235,7 @@
     $('#btnApplyQuickFilters')?.addEventListener('click', applyQuickFiltersFromModal);
     $('#btnResetQuickFilters')?.addEventListener('click', () => { resetQuickFiltersUI(); renderQuickFilterOptions(categorySourceProducts()); });
     $('#btnToggleCategoryFilters')?.addEventListener('click', toggleCategoryQuickFilters);
-    ['categoryQuickBrand','categoryQuickSize','categoryQuickColor','categoryQuickWarehouse','categoryQuickImage'].forEach(id => {
+    ['categoryQuickBrand','categoryQuickSize','categoryQuickColor'].forEach(id => {
       $(`#${id}`)?.addEventListener('change', () => renderQuickFilterOptions(categorySourceProducts()));
     });
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
@@ -525,9 +525,7 @@
     return {
       brand: $('#categoryQuickBrand')?.value || $('#filterBrand')?.value || '',
       size: $('#categoryQuickSize')?.value || state.variantFilters.size || '',
-      color: $('#categoryQuickColor')?.value || state.variantFilters.color || '',
-      warehouse: $('#categoryQuickWarehouse')?.value || $('#filterWarehouse')?.value || '',
-      image: $('#categoryQuickImage')?.value || $('#filterImage')?.value || ''
+      color: $('#categoryQuickColor')?.value || state.variantFilters.color || ''
     };
   }
 
@@ -538,12 +536,6 @@
       if (excludeKey !== 'brand' && criteria.brand && norm(val(product,'marca')) !== norm(criteria.brand)) return false;
       if (excludeKey !== 'size' && criteria.size && norm(val(product,'talla')) !== norm(criteria.size)) return false;
       if (excludeKey !== 'color' && criteria.color && norm(val(product,'color')) !== norm(criteria.color)) return false;
-      if (excludeKey !== 'warehouse' && criteria.warehouse && norm(val(product,'almacen')) !== norm(criteria.warehouse)) return false;
-      if (excludeKey !== 'image' && criteria.image) {
-        const hasMedia = !!mediaUrl(product);
-        if (criteria.image === 'with' && !hasMedia) return false;
-        if (criteria.image === 'without' && hasMedia) return false;
-      }
       return true;
     });
   }
@@ -565,16 +557,12 @@
     const scopedBrands = filterQuickSourceByCriteria(source, criteria, 'brand');
     const scopedSizes = filterQuickSourceByCriteria(source, criteria, 'size');
     const scopedColors = filterQuickSourceByCriteria(source, criteria, 'color');
-    const scopedWarehouses = filterQuickSourceByCriteria(source, criteria, 'warehouse');
 
     return {
       brands: uniqueSorted(scopedBrands.map(p => val(p,'marca'))),
       categories: uniqueSorted(filterQuickSourceByCriteria(source, criteria).map(p => val(p,'categoria'))),
       sizes: uniqueSorted(scopedSizes.map(p => val(p,'talla'))),
-      colors: uniqueSorted(scopedColors.map(p => val(p,'color'))),
-      warehouses: uniqueSorted(scopedWarehouses.map(p => val(p,'almacen'))),
-      brandCounts: counts(scopedBrands, 'marca').slice(0,6),
-      colorCounts: counts(scopedColors, 'color').slice(0,8)
+      colors: uniqueSorted(scopedColors.map(p => val(p,'color')))
     };
   }
 
@@ -590,8 +578,6 @@
   function syncQuickFiltersFromState() {
     const mappings = {
       categoryQuickBrand: $('#filterBrand')?.value || '',
-      categoryQuickWarehouse: $('#filterWarehouse')?.value || '',
-      categoryQuickImage: $('#filterImage')?.value || '',
       categoryQuickSize: state.variantFilters.size || '',
       categoryQuickColor: state.variantFilters.color || ''
     };
@@ -632,30 +618,19 @@
     fillQuickSelect('categoryQuickBrand', 'Seleccionar', facets.brands, $('#categoryQuickBrand')?.value || $('#filterBrand')?.value || '');
     fillQuickSelect('categoryQuickSize', 'Seleccionar', facets.sizes, $('#categoryQuickSize')?.value || state.variantFilters.size || '');
     fillQuickSelect('categoryQuickColor', 'Seleccionar', facets.colors, $('#categoryQuickColor')?.value || state.variantFilters.color || '');
-    fillQuickSelect('categoryQuickWarehouse', 'Seleccionar', facets.warehouses, $('#categoryQuickWarehouse')?.value || $('#filterWarehouse')?.value || '');
-    fillQuickSelect('categoryQuickImage', 'Todos', ['with','without'].map(v => v === 'with' ? 'Con imagen' : 'Sin imagen'));
-    const imageSelect = $('#categoryQuickImage');
-    if (imageSelect) {
-      imageSelect.innerHTML = '<option value="">Todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option>';
-      imageSelect.value = $('#filterImage')?.value || '';
-    }
-    renderQuickChipButtons('quickBrandChips', facets.brandCounts, 'brand');
-    renderQuickChipButtons('quickColorChips', facets.colorCounts, 'color');
   }
 
   function resetQuickFiltersUI() {
-    ['categoryQuickBrand','categoryQuickSize','categoryQuickColor','categoryQuickWarehouse','categoryQuickImage'].forEach(id => { const el = $(`#${id}`); if (el) el.value = ''; });
+    ['categoryQuickBrand','categoryQuickSize','categoryQuickColor'].forEach(id => { const el = $(`#${id}`); if (el) el.value = ''; });
   }
 
   function applyQuickFiltersFromModal() {
     const brand = $('#categoryQuickBrand')?.value || '';
     const size = $('#categoryQuickSize')?.value || '';
     const color = $('#categoryQuickColor')?.value || '';
-    const warehouse = $('#categoryQuickWarehouse')?.value || '';
-    const imageState = $('#categoryQuickImage')?.value || '';
     if ($('#filterBrand')) $('#filterBrand').value = brand;
-    if ($('#filterWarehouse')) $('#filterWarehouse').value = warehouse;
-    if ($('#filterImage')) $('#filterImage').value = imageState;
+    if ($('#filterWarehouse')) $('#filterWarehouse').value = '';
+    if ($('#filterImage')) $('#filterImage').value = '';
     state.variantFilters = { size, color };
     state.page = 1;
     closeCategoryBrowser();
@@ -670,9 +645,6 @@
     const pushFilter = (type, label, value, style='') => { if (value) filters.push({ type, label, value, style }); };
     pushFilter('brand', 'Marca', $('#filterBrand')?.value || '');
     pushFilter('category', 'Categoría', $('#filterCategory')?.value || '');
-    pushFilter('warehouse', 'Almacén', $('#filterWarehouse')?.value || '');
-    const imageValue = $('#filterImage')?.value || '';
-    pushFilter('image', 'Imagen', imageValue === 'with' ? 'Con imagen' : imageValue === 'without' ? 'Sin imagen' : '');
     pushFilter('size', 'Talla', state.variantFilters.size || '');
     pushFilter('color', 'Color', state.variantFilters.color || '', chipStyle(state.variantFilters.color || ''));
     if (!filters.length) {
@@ -687,8 +659,6 @@
     const resetters = {
       brand: () => $('#filterBrand') && ($('#filterBrand').value = ''),
       category: () => { if ($('#filterCategory')) $('#filterCategory').value = ''; state.categoryAudienceFilter = ''; },
-      warehouse: () => $('#filterWarehouse') && ($('#filterWarehouse').value = ''),
-      image: () => $('#filterImage') && ($('#filterImage').value = ''),
       size: () => state.variantFilters.size = '',
       color: () => state.variantFilters.color = ''
     };
