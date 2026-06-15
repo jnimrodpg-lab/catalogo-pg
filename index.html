@@ -11,8 +11,8 @@
 </head>
 <body>
   <div class="client-app" id="appRoot">
-    <aside class="glass-panel sidebar">
-      <button class="sidebar-toggle" id="btnToggleSidebar" type="button" aria-label="Minimizar menú" title="Minimizar menú">☰</button>
+    <aside class="glass-panel sidebar admin-config-panel" id="adminConfigPanel" aria-label="Panel de configuración">
+      <button class="sidebar-toggle" id="btnToggleSidebar" type="button" aria-label="Cerrar configuración" title="Cerrar configuración">×</button>
       <div class="brand-row">
         <div class="brand-mark">C</div>
         <div>
@@ -45,6 +45,9 @@
       </div>
     </aside>
 
+    <button class="floating-config-btn" id="btnOpenAdminPanel" type="button" aria-label="Abrir configuración" title="Configuración del propietario">⚙️</button>
+    <div class="admin-panel-scrim" id="adminPanelScrim" aria-hidden="true"></div>
+
     <main class="main-shell">
       <div class="viewer-topbar glass-panel" id="viewerTopbar">
         <div>
@@ -68,28 +71,35 @@
       </header>
 
       <section class="catalog-view view active" id="viewCatalog">
-        <div class="client-search-shell glass-panel model-one-search">
-          <div class="search-client-head">
-            <div>
-              <strong>Busca tu producto</strong>
-              <span>Escribe nombre, SKU, talla, color o ubicación. Los productos similares se agrupan automáticamente.</span>
-            </div>
+        <div class="client-search-shell glass-panel model-one-search simplified-search-shell">
+          <div class="search-client-head simplified">
+            <strong>Busca tu producto</strong>
             <div class="search-client-actions">
-              <span class="count-pill"><b id="statTotalTop">0</b> productos</span>
+              <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
               <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
             </div>
           </div>
-          <div class="search-client-row">
+          <div class="search-client-row simplified-search-row">
             <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
-            <button class="icon-search-btn" id="btnSearch" type="button">⌕</button>
+            <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
             <button class="scan-btn" id="btnScanFake" type="button">Escanear código</button>
+            <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Buscar por categoría</button>
           </div>
-          <div class="filter-row compact-filters">
+          <div class="applied-filters-panel" id="appliedFiltersPanel">
+            <div class="applied-filters-head">
+              <span>Filtros aplicados</span>
+              <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
+            </div>
+            <div class="applied-filters-list" id="appliedFiltersList">
+              <span class="applied-filter-empty">Sin filtros activos</span>
+            </div>
+          </div>
+          <div class="filter-row compact-filters hidden" aria-hidden="true">
             <select id="filterBrand"><option value="">Todas las marcas</option></select>
             <select id="filterCategory"><option value="">Todas las categorías</option></select>
             <select id="filterWarehouse"><option value="">Todos los almacenes</option></select>
             <select id="filterImage"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
-            <button class="ghost-btn" id="btnClearFilters" type="button">Limpiar filtros</button>
+            <button class="ghost-btn" id="btnHiddenClearFilters" type="button">Limpiar filtros</button>
           </div>
         </div>
 
@@ -128,8 +138,8 @@
                   <div class="search-meta-block" data-card-field="almacen"><span class="search-meta-label">Almacén</span><b class="search-meta-value store" id="activeProductWarehouse">—</b></div>
                   <div class="search-meta-block" data-card-field="marca"><span class="search-meta-label">Marca</span><b class="search-meta-value" id="activeProductBrand">—</b></div>
                   <div class="search-meta-block" data-card-field="categoria"><span class="search-meta-label">Categoría</span><b class="search-meta-value" id="activeProductCategory">—</b></div>
-                  <div class="search-meta-block optional-card-field" data-card-field="stock"><span class="search-meta-label">Stock</span><b class="search-meta-value" id="activeProductStock">—</b></div>
-                  <div class="search-meta-block optional-card-field" data-card-field="precio"><span class="search-meta-label">Precio</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
+                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="stock"><span class="search-meta-label">Stock</span><b class="search-meta-value" id="activeProductStock">—</b></div>
+                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="precio"><span class="search-meta-label">Precio</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
                 </div>
                 <div class="active-meta-line" id="activeProductMeta">Variante activa: —</div>
                 <div class="variant-groups">
@@ -137,11 +147,9 @@
                   <div class="variant-group" data-card-field="color"><span class="variant-group-label">Color</span><div class="variant-strip" id="activeColorStrip"></div></div>
                 </div>
                 <div class="search-card-actions-row">
-                  <button class="search-card-action action-btn" id="btnCopyProductInfo" type="button">Copiar</button>
-                  <button class="search-card-action action-btn" id="btnShareWhatsApp" type="button" data-card-field="whatsapp">WhatsApp</button>
-                  <button class="search-card-action action-btn primary" id="btnOpenProductViewer" type="button">Ver en grande</button>
+                  <button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="request">Agregar a solicitud</button>
                 </div>
-                <div class="search-card-expand-hint">Haz clic para ver card grande</div>
+                <div class="search-card-expand-hint">Haz clic para ampliar el producto</div>
               </div>
             </article>
           </aside>
@@ -149,6 +157,55 @@
       </section>
 
       <div class="search-card-overlay" id="searchCardOverlay" aria-hidden="true"></div>
+      <section class="category-browser-backdrop" id="categoryBrowser" aria-hidden="true">
+        <div class="glass-panel category-browser-panel">
+          <div class="category-browser-head">
+            <div>
+              <div class="eyebrow">Búsqueda por categoría</div>
+              <h2>Explora por categoría</h2>
+              <p>Primero elige a quién va dirigido y luego selecciona la categoría que quieres ver.</p>
+            </div>
+            <button class="search-card-expand-close category-browser-close" id="btnCloseCategoryBrowser" type="button" aria-label="Cerrar búsqueda por categoría">×</button>
+          </div>
+          <div class="category-audience-row" id="categoryAudienceFilters">
+            <button type="button" class="category-audience-chip active" data-audience="all">Todo</button>
+            <button type="button" class="category-audience-chip" data-audience="mujer">Mujer</button>
+            <button type="button" class="category-audience-chip" data-audience="varon">Varón</button>
+            <button type="button" class="category-audience-chip" data-audience="nino">Niño</button>
+            <button type="button" class="category-audience-chip" data-audience="nina">Niña</button>
+            <button type="button" class="category-audience-chip" data-audience="bebe">Bebé</button>
+            <button type="button" class="category-audience-chip" data-audience="unisex">Unisex</button>
+          </div>
+          <div class="category-browser-grid" id="categoryBrowserGrid"></div>
+          <div class="category-quick-filters">
+            <div class="category-quick-filters-head">
+              <h3>Filtros rápidos</h3>
+              <p>Refina por marca, talla, color y otras opciones.</p>
+            </div>
+            <div class="category-quick-selects">
+              <label><span>Marca</span><select id="categoryQuickBrand"><option value="">Seleccionar</option></select></label>
+              <label><span>Talla</span><select id="categoryQuickSize"><option value="">Seleccionar</option></select></label>
+              <label><span>Color</span><select id="categoryQuickColor"><option value="">Seleccionar</option></select></label>
+              <label><span>Almacén</span><select id="categoryQuickWarehouse"><option value="">Seleccionar</option></select></label>
+              <label><span>Imagen</span><select id="categoryQuickImage"><option value="">Todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select></label>
+            </div>
+            <div class="category-quick-chip-groups">
+              <div class="quick-chip-group">
+                <span class="quick-chip-title">Marcas destacadas</span>
+                <div class="quick-chip-row" id="quickBrandChips"></div>
+              </div>
+              <div class="quick-chip-group">
+                <span class="quick-chip-title">Colores</span>
+                <div class="quick-chip-row" id="quickColorChips"></div>
+              </div>
+            </div>
+            <div class="category-quick-actions">
+              <button class="ghost-btn" id="btnResetQuickFilters" type="button">Limpiar</button>
+              <button class="scan-btn" id="btnApplyQuickFilters" type="button">Aplicar filtros</button>
+            </div>
+          </div>
+        </div>
+      </section>
       <section class="sheet-view view" id="viewSheet">
         <div class="glass-panel setup-panel">
           <div class="section-head">
@@ -211,11 +268,11 @@
                 <label><input type="checkbox" data-config-field="categoria" checked> Categoría</label>
                 <label><input type="checkbox" data-config-field="talla" checked> Talla</label>
                 <label><input type="checkbox" data-config-field="color" checked> Color</label>
-                <label><input type="checkbox" data-config-field="ubicacion" checked> Ubicación</label>
-                <label><input type="checkbox" data-config-field="almacen" checked> Almacén</label>
+                <label><input type="checkbox" data-config-field="ubicacion"> Ubicación</label>
+                <label><input type="checkbox" data-config-field="almacen"> Almacén</label>
                 <label><input type="checkbox" data-config-field="stock"> Stock</label>
                 <label><input type="checkbox" data-config-field="precio"> Precio</label>
-                <label><input type="checkbox" data-config-field="whatsapp" checked> WhatsApp</label>
+                <label><input type="checkbox" data-config-field="request" checked> Solicitud / carrito</label>
               </div>
             </div>
           </div>
@@ -252,7 +309,31 @@
     </div>
   </div>
 
+
+  <button class="request-floating" id="btnRequestFloating" type="button" aria-label="Ver solicitud">
+    <span>Solicitud</span><b id="requestCartCount">0</b>
+  </button>
+
+  <div class="request-drawer" id="requestDrawer" aria-hidden="true">
+    <div class="request-drawer-panel glass-panel">
+      <div class="request-drawer-head">
+        <div>
+          <div class="eyebrow">Solicitud del cliente</div>
+          <h2>Productos elegidos</h2>
+          <p>Revisa tallas y colores antes de enviar o copiar la solicitud.</p>
+        </div>
+        <button class="search-card-expand-close request-close" id="btnCloseRequestDrawer" type="button" aria-label="Cerrar solicitud">×</button>
+      </div>
+      <div class="request-list" id="requestCartList"></div>
+      <div class="request-actions">
+        <button class="ghost-btn" id="btnClearRequest" type="button">Vaciar</button>
+        <button class="ghost-btn" id="btnCopyRequest" type="button">Copiar solicitud</button>
+        <button class="primary-btn" id="btnSendRequest" type="button">Enviar solicitud</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-stack" id="toastStack"></div>
-  <script src="./assets/app-main.js?v=client-catalog-v14-ux"></script>
+  <script src="./assets/app-main.js?v=client-catalog-v17-request"></script>
 </body>
 </html>
