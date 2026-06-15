@@ -31,3 +31,7 @@ V10
 - Imagen/video ocupa todo el alto del área izquierda del card.
 - Panel de información queda compacto y sin scroll interno en escritorio.
 - Mejora contraste y lectura de chips de color.
+
+
+V12
+- Ajusta el visor para acercarlo al diseño de referencia: card 16:9, media full-bleed y panel derecho glass overlay interno.
