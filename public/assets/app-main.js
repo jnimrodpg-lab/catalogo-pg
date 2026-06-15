@@ -190,6 +190,7 @@
     $$('.nav-item').forEach(btn => btn.addEventListener('click', () => { setView(btn.dataset.view); }));
     $('#btnToggleSidebar')?.addEventListener('click', closeAdminPanel);
     $('#btnOpenAdminPanel')?.addEventListener('click', openAdminPanel);
+    $('#btnOpenConfigPanel')?.addEventListener('click', openAdminPanel);
     $('#adminPanelScrim')?.addEventListener('click', closeAdminPanel);
     applyAdminPanelState();
     $('#btnGoSheet').addEventListener('click', () => { openAdminPanel(); setView('sheet'); });
@@ -222,6 +223,7 @@
     $('#btnCopyProductInfo')?.addEventListener('click', e => { e.stopPropagation(); copySelectedProductInfo(); });
     $('#btnShareWhatsApp')?.addEventListener('click', e => { e.stopPropagation(); addSelectedToRequest(); });
     $('#btnRequestFloating')?.addEventListener('click', openRequestDrawer);
+    $('#btnRequestTop')?.addEventListener('click', openRequestDrawer);
     $('#btnCloseRequestDrawer')?.addEventListener('click', closeRequestDrawer);
     $('#btnClearRequest')?.addEventListener('click', clearRequestCart);
     $('#btnCopyRequest')?.addEventListener('click', copyRequestCart);
@@ -235,6 +237,13 @@
     $('#btnApplyQuickFilters')?.addEventListener('click', applyQuickFiltersFromModal);
     $('#btnResetQuickFilters')?.addEventListener('click', () => { resetQuickFiltersUI(); renderQuickFilterOptions(categorySourceProducts()); });
     $('#btnToggleCategoryFilters')?.addEventListener('click', toggleCategoryQuickFilters);
+    $$('#showroomAudienceFilters .showroom-filter-chip').forEach(btn => btn.addEventListener('click', () => {
+      state.categoryAudience = btn.dataset.audience || 'all';
+      $$('#showroomAudienceFilters .showroom-filter-chip').forEach(b => b.classList.toggle('active', b === btn));
+      state.categoryAudienceFilter = state.categoryAudience === 'all' ? '' : state.categoryAudience;
+      state.page = 1;
+      loadProducts();
+    }));
     ['categoryQuickBrand','categoryQuickSize','categoryQuickColor'].forEach(id => {
       $(`#${id}`)?.addEventListener('change', () => renderQuickFilterOptions(categorySourceProducts()));
     });
@@ -332,6 +341,7 @@
     const b = getBranch();
     if (b) {
       $('#brandSubtitle').textContent = b.name || 'Catálogo';
+      $('#showroomBrandName') && ($('#showroomBrandName').textContent = (b.name || 'Premium').slice(0,18));
     }
     hydrateViewerTopbar();
     updateAdminChecklist();
@@ -625,7 +635,7 @@
   }
 
   function applyQuickFiltersFromModal() {
-    const brand = $('#categoryQuickBrand')?.value || '';
+    const brand = $('#categoryQuickBrand')?.value || $('#filterBrand')?.value || '';
     const size = $('#categoryQuickSize')?.value || '';
     const color = $('#categoryQuickColor')?.value || '';
     if ($('#filterBrand')) $('#filterBrand').value = brand;
@@ -772,6 +782,7 @@
       state.products = items;
       state.facets = data.facets || {};
       renderFacets();
+      refreshShowroomFilterFacets();
       renderSummary();
       renderProducts(state.products);
       renderAppliedFilters();
@@ -804,6 +815,7 @@
       state.page = Number(data.page || 1);
       state.totalPages = Number(data.total_pages || 1);
       renderFacets();
+      refreshShowroomFilterFacets();
       renderSummary();
       renderProducts(state.products);
       renderAppliedFilters();
@@ -843,6 +855,7 @@
     state.page = Math.min(state.page, state.totalPages);
     const slice = groups.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
     renderFacets();
+    refreshShowroomFilterFacets();
     renderSummary();
     renderProducts(slice);
     renderAppliedFilters();
@@ -874,7 +887,8 @@
     $('#statImages').textContent = state.summary.with_image ?? 0;
     $('#statStock').textContent = state.summary.with_stock ?? 0;
     const groupText = state.groupTotalProducts ? ` · ${state.groupTotalProducts} variantes/registros` : '';
-    $('#resultSummary').textContent = state.publicMode || isViewer() ? `Mostrando ${state.products.length} productos agrupados` : `Mostrando ${state.products.length} familias de ${state.total || state.products.length}${groupText}`;
+    $('#resultSummary').textContent = `Mostrando ${state.products.length} familias${groupText}`;
+    $('#showroomFamiliesCount') && ($('#showroomFamiliesCount').textContent = state.total || state.products.length || 0);
     $('#pageSummary').textContent = `Página ${state.page} de ${state.totalPages}`;
     $('#paginationText').textContent = `Página ${state.page} / ${state.totalPages}`;
     $('#btnPrevPage').disabled = state.page <= 1;
@@ -979,6 +993,8 @@
     const list = $('#productGrid');
     state.currentResults = products || [];
     state.currentGroups = products || [];
+    const famCount = products?.length || 0;
+    $('#showroomFamiliesCount') && ($('#showroomFamiliesCount').textContent = famCount);
     if (!products.length) {
       renderEmptyState('No hay productos para mostrar. Revisa la búsqueda o importa tu Sheet.');
       selectProduct(null);
@@ -988,33 +1004,23 @@
       const variants = Number(p._variantCount || p._groupItems?.length || 1);
       const sizes = p._sizeOptions?.length ? p._sizeOptions : uniqueValues(p._groupItems || [p], 'talla');
       const colors = p._colorOptions?.length ? p._colorOptions : uniqueValues(p._groupItems || [p], 'color');
-      const locs = p._locationOptions?.length ? p._locationOptions : uniqueValues(p._groupItems || [p], 'ubicacion');
-      const whs = p._warehouseOptions?.length ? p._warehouseOptions : uniqueValues(p._groupItems || [p], 'almacen');
-      const skuLabel = (p._skuOptions?.[0] || val(p,'sku') || val(p,'barras') || '—');
       const title = p._groupName || val(p,'nombre') || 'Sin nombre';
+      const price = val(p,'precio');
       const subtitle = [val(p,'marca'), val(p,'categoria')].filter(Boolean).join(' · ');
+      const dots = colors.slice(0,4).map(c => `<span class="showroom-card-dot" style="${chipStyle(c)}" title="${esc(c)}"></span>`).join('');
       return `
-      <div class="product-row product-family-row model-one-row" data-index="${idx}" tabindex="0" title="Seleccionar producto agrupado">
-        <div class="group-product-cell">
-          <div class="group-thumb">${renderThumb(p)}</div>
-          <div class="group-info">
-            <strong>${esc(title)}</strong>
-            <small>${esc(subtitle || `SKU ${skuLabel}`)}</small>
-            <span class="group-location-mini">${esc(`${sizes.length || '—'} tallas · ${colors.length || '—'} colores`)}</span>
-            <em class="group-open-label">Ver producto →</em>
-          </div>
-        </div>
-        <div><span class="metric-pill">${esc(variants)}</span><small>${esc(variants === 1 ? (val(p,'variante') || '1 variante') : 'variantes')}</small></div>
-        <div><span class="metric-pill">${esc(colors.length || '—')}</span><small>${esc(colors.slice(0,3).join(' · ') || 'colores')}</small></div>
-        <div><span class="metric-pill">${esc(sizes.length || '—')}</span><small>${esc(sizes.slice(0,4).join(' · ') || 'tallas')}</small></div>
-      </div>`;
+      <button type="button" class="product-row showroom-product-card" data-index="${idx}" title="Seleccionar producto">
+        <span class="showroom-product-thumb">${renderThumb(p)}</span>
+        <span class="showroom-product-info"><strong>${esc(title)}</strong><small>${esc(subtitle || 'Familia de producto')}</small>${price?`<b class="showroom-price">${esc(price)}</b>`:''}<em>${esc(variants)} variante${variants===1?'':'s'}</em><span class="showroom-card-dots">${dots}${colors.length>4?`<i>+${colors.length-4}</i>`:''}</span></span>
+        <span class="showroom-product-heart">♡</span>
+      </button>`;
     }).join('');
     $$('.product-row', list).forEach(row => {
       const pick = () => {
         const group = products[Number(row.dataset.index)];
         const item = group?._groupItems?.find(p => mediaUrl(p)) || group?._groupItems?.[0] || group;
-        if (group?._groupItems && !item._groupItems) item._groupItems = group._groupItems;
-        if (group?._groupKey && !item._groupKey) item._groupKey = group._groupKey;
+        if (group?._groupItems && item && !item._groupItems) item._groupItems = group._groupItems;
+        if (group?._groupKey && item && !item._groupKey) item._groupKey = group._groupKey;
         selectProduct(item);
       };
       row.addEventListener('click', pick);
@@ -1143,6 +1149,46 @@
     make('color', 'activeColorStrip');
   }
 
+  function updateShowroom(product) {
+    const main = $('#showroomMainMedia');
+    const thumbs = $('#showroomThumbs');
+    const counter = $('#showroomMediaCounter');
+    const type = $('#showroomProductType');
+    if (!main || !thumbs) return;
+    if (!product) {
+      main.innerHTML = '<div class="media-empty">Selecciona un producto</div>';
+      thumbs.innerHTML = '';
+      counter && (counter.textContent = '01 / 01');
+      return;
+    }
+    main.innerHTML = renderMedia(product, 'featured');
+    $$('video', main).forEach(v => { v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.play?.().catch(()=>{}); });
+    const siblings = siblingProducts(product);
+    const medias = siblings.filter(p => mediaUrl(p)).slice(0,6);
+    const currentIdentity = productIdentity(product);
+    thumbs.innerHTML = (medias.length ? medias : [product]).map((p, idx) => `<button type="button" class="showroom-thumb ${productIdentity(p)===currentIdentity?'active':''}" data-media-index="${idx}">${renderThumb(p)}${videoUrl(p)?'<span>▶</span>':''}</button>`).join('') + (siblings.filter(p=>mediaUrl(p)).length>6 ? '<button class="showroom-thumb more" type="button">+'+(siblings.filter(p=>mediaUrl(p)).length-6)+'</button>' : '');
+    $$('.showroom-thumb[data-media-index]', thumbs).forEach(btn => btn.addEventListener('click', () => {
+      const picked = medias[Number(btn.dataset.mediaIndex)] || product;
+      if (product._groupItems && !picked._groupItems) picked._groupItems = product._groupItems;
+      if (product._groupKey && !picked._groupKey) picked._groupKey = product._groupKey;
+      selectProduct(picked);
+    }));
+    counter && (counter.textContent = `01 / ${String(Math.max(1, medias.length)).padStart(2,'0')}`);
+    type && (type.textContent = val(product,'categoria') || 'Producto');
+  }
+
+  function refreshShowroomFilterFacets() {
+    const source = categorySourceProducts();
+    renderQuickFilterOptions(source);
+    const colorHost = $('#showroomColorSwatches');
+    if (colorHost) {
+      const facets = buildQuickFilterFacets(source);
+      const current = $('#categoryQuickColor')?.value || state.variantFilters.color || '';
+      colorHost.innerHTML = (facets.colors || []).slice(0,8).map(c => `<button type="button" class="showroom-color-dot ${norm(c)===norm(current)?'active':''}" title="${esc(c)}" style="${chipStyle(c)}" data-color="${esc(c)}"></button>`).join('');
+      $$('.showroom-color-dot', colorHost).forEach(btn => btn.addEventListener('click', () => { $('#categoryQuickColor').value = btn.dataset.color || ''; applyQuickFiltersFromModal(); }));
+    }
+  }
+
   function selectProduct(product) {
     state.selected = product;
     $$('.product-row').forEach(row => {
@@ -1153,17 +1199,16 @@
       $('#activeProductMedia').innerHTML = '<div class="media-empty">Selecciona un producto</div>';
       $('#activeProductName').textContent = 'Busca o selecciona un producto';
       $('#activeProductSku').textContent = 'SKU —';
-      ['activeProductLocation','activeProductWarehouse','activeProductBrand','activeProductCategory','activeProductStock','activeProductPrice'].forEach(id => { const el=$(`#${id}`); if(el) el.textContent = '—'; });
+      ['activeProductBrand','activeProductCategory','activeProductStock','activeProductPrice'].forEach(id => { const el=$(`#${id}`); if(el) el.textContent = '—'; });
       $('#activeProductMeta').textContent = '';
       $('#activeSizeStrip').innerHTML = '';
       $('#activeColorStrip').innerHTML = '';
       return;
     }
+    updateShowroom(product);
     $('#activeProductMedia').innerHTML = renderMedia(product, 'featured');
     $('#activeProductName').textContent = val(product,'nombre') || 'Sin nombre';
     $('#activeProductSku').textContent = `SKU ${val(product,'sku') || val(product,'barras') || '—'}`;
-    $('#activeProductLocation').textContent = val(product,'ubicacion') || [product.zona, product.estante, product.nivel, product.slot].filter(Boolean).join(' · ') || '—';
-    $('#activeProductWarehouse').textContent = val(product,'almacen') || '—';
     $('#activeProductBrand').textContent = val(product,'marca') || '—';
     $('#activeProductCategory').textContent = val(product,'categoria') || '—';
     $('#activeProductStock') && ($('#activeProductStock').textContent = val(product,'stock') || '—');
@@ -1245,6 +1290,7 @@
     const items = state.requestItems || [];
     const count = $('#requestCartCount');
     if (count) count.textContent = String(items.length);
+    $('#requestTopCount') && ($('#requestTopCount').textContent = String(items.length));
     $('#btnRequestFloating')?.classList.toggle('visible', items.length > 0);
     const list = $('#requestCartList');
     if (!list) return;

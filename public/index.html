@@ -70,86 +70,78 @@
         </div>
       </header>
 
-      <section class="catalog-view view active" id="viewCatalog">
-        <div class="client-search-shell glass-panel model-one-search simplified-search-shell">
-          <div class="search-client-head simplified">
-            <strong>Busca tu producto</strong>
-            <div class="search-client-actions">
-              <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
-              <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
-            </div>
+      <section class="catalog-view view active showroom-view" id="viewCatalog">
+        <div class="showroom-topbar">
+          <div class="showroom-brand-mark">
+            <div class="showroom-gem" aria-hidden="true">◇</div>
+            <div><strong id="showroomBrandName">PREMIUM</strong><span>COMMERCE</span></div>
           </div>
-          <div class="search-client-row simplified-search-row">
-            <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
+          <div class="showroom-searchbox">
+            <input id="searchInput" placeholder="Buscar productos, marcas o SKU..." autocomplete="off" />
             <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
-            <button class="scan-btn" id="btnScanFake" type="button">Escanear código</button>
-            <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Buscar por categoría</button>
           </div>
-          <div class="filter-row compact-filters hidden" aria-hidden="true">
-            <select id="filterBrand"><option value="">Todas las marcas</option></select>
-            <select id="filterCategory"><option value="">Todas las categorías</option></select>
-            <select id="filterWarehouse"><option value="">Todos los almacenes</option></select>
-            <select id="filterImage"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
-            <button class="ghost-btn" id="btnHiddenClearFilters" type="button">Limpiar filtros</button>
-          </div>
+          <button class="scan-btn showroom-action" id="btnScanFake" type="button">▦ Escanear código</button>
+          <button class="ghost-btn showroom-action showroom-category-action" id="btnOpenCategoryBrowser" type="button">▦ Explorar categorías</button>
+          <button class="mini-btn showroom-request-pill" id="btnRequestTop" type="button" aria-label="Ver solicitud">♡ <span id="requestTopCount">0</span></button>
+          <button class="floating-config-btn showroom-gear" id="btnOpenConfigPanel" type="button" aria-label="Configuración">⚙</button>
         </div>
 
-        <div class="product-client-stage glass-panel model-one-board">
-          <div class="groups-panel">
-            <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
-              <div class="applied-filters-head">
-                <span>Filtros aplicados</span>
-                <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
+        <div class="showroom-shell">
+          <aside class="showroom-filters glass-panel">
+            <div class="showroom-filter-head"><strong>Filtros</strong><button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button></div>
+            <div class="showroom-filter-block">
+              <span class="showroom-filter-label">Género</span>
+              <div class="showroom-chip-row" id="showroomAudienceFilters">
+                <button type="button" class="showroom-filter-chip active" data-audience="all">Todo</button>
+                <button type="button" class="showroom-filter-chip" data-audience="mujer">Mujer</button>
+                <button type="button" class="showroom-filter-chip" data-audience="varon">Varón</button>
+                <button type="button" class="showroom-filter-chip" data-audience="unisex">Unisex</button>
               </div>
-              <div class="applied-filters-list" id="appliedFiltersList">
-                <span class="applied-filter-empty">Sin filtros activos</span>
-              </div>
             </div>
-            <div class="result-summary-row model-one-summary">
-              <span id="resultSummary">Mostrando 0 productos</span>
-              <span id="pageSummary">Página 1</span>
-            </div>
-            <div class="product-table-wrap model-one-list">
-              <div class="product-head"><div>Producto</div><div>Variantes</div><div>Colores</div><div>Tallas</div></div>
-              <div class="product-list" id="productGrid"></div>
-            </div>
-            <div class="pagination inline-pagination">
-              <button class="ghost-btn" id="btnPrevPage" type="button">←</button>
-              <span id="paginationText">Página 1</span>
-              <button class="ghost-btn" id="btnNextPage" type="button">→</button>
-            </div>
-          </div>
+            <label class="showroom-filter-block"><span class="showroom-filter-label">Categoría</span><select id="filterCategory"><option value="">Todas las categorías</option></select></label>
+            <label class="showroom-filter-block"><span class="showroom-filter-label">Marca</span><select id="filterBrand"><option value="">Todas las marcas</option></select></label>
+            <label class="showroom-filter-block"><span class="showroom-filter-label">Talla</span><select id="categoryQuickSize"><option value="">Seleccionar</option></select></label>
+            <label class="showroom-filter-block"><span class="showroom-filter-label">Color</span><select id="categoryQuickColor"><option value="">Seleccionar</option></select></label>
+            <div class="showroom-color-inline" id="showroomColorSwatches"></div>
+            <input type="hidden" id="filterWarehouse" value="" />
+            <input type="hidden" id="filterImage" value="" />
+            <select id="categoryQuickBrand" class="hidden" aria-hidden="true"><option value=""></option></select>
+            <button class="showroom-filter-cta" id="btnApplyQuickFilters" type="button">Ver <span id="showroomFamiliesCount">0</span> familias</button>
+            <button class="ghost-btn hidden" id="btnResetQuickFilters" type="button">Limpiar</button>
+            <button class="ghost-btn hidden" id="btnHiddenClearFilters" type="button">Limpiar filtros</button>
+            <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel"><div class="applied-filters-list" id="appliedFiltersList"><span class="applied-filter-empty">Sin filtros activos</span></div></div>
+          </aside>
 
-          <aside class="selected-panel">
-            <div class="selected-panel-title">Vista rápida del producto</div>
-            <article class="search-card active-product-card is-clickable" id="activeProductCard" tabindex="0" aria-label="Abrir visor de producto">
+          <main class="showroom-main glass-panel">
+            <div class="showroom-main-media" id="showroomMainMedia"><div class="media-empty">Selecciona un producto</div></div>
+            <div class="showroom-media-badge">✦ Nuevo</div>
+            <button class="showroom-float-icon favorite" type="button" aria-label="Favorito">♡</button>
+            <button class="showroom-float-icon expand" id="btnOpenProductViewer" type="button" aria-label="Ampliar">⛶</button>
+            <div class="showroom-media-counter" id="showroomMediaCounter">01 / 01</div>
+            <div class="showroom-thumbs" id="showroomThumbs"></div>
+            <div class="showroom-related-head"><div><h3>Productos relacionados</h3><p>Explora más de esta familia</p></div><div class="result-summary-row"><span id="resultSummary">Mostrando 0 familias</span><span id="pageSummary">Página 1</span></div></div>
+            <div class="product-table-wrap model-one-list showroom-related-wrap"><div class="product-list" id="productGrid"></div></div>
+            <div class="pagination inline-pagination showroom-pagination"><button class="ghost-btn" id="btnPrevPage" type="button">←</button><span id="paginationText">Página 1</span><button class="ghost-btn" id="btnNextPage" type="button">→</button></div>
+          </main>
+
+          <aside class="selected-panel showroom-detail-panel">
+            <article class="search-card active-product-card is-clickable showroom-detail-card" id="activeProductCard" tabindex="0" aria-label="Abrir visor de producto">
               <button class="search-card-expand-close" id="activeProductCardClose" type="button" aria-label="Cerrar visor">×</button>
               <div class="product-photo" id="activeProductMedia"><div class="media-empty">Selecciona un producto</div></div>
               <div class="search-card-body">
-                <div class="eyebrow green">Producto</div>
-                <div class="search-card-title-row">
-                  <div>
-                    <div class="search-card-title" id="activeProductName">Busca o selecciona un producto</div>
-                    <div class="search-card-sku" id="activeProductSku" data-card-field="sku">SKU —</div>
-                  </div>
-                </div>
-                <div class="search-card-meta">
-                  <div class="search-meta-block" data-card-field="ubicacion"><span class="search-meta-label">Ubicación</span><b class="search-meta-value" id="activeProductLocation">—</b></div>
-                  <div class="search-meta-block" data-card-field="almacen"><span class="search-meta-label">Almacén</span><b class="search-meta-value store" id="activeProductWarehouse">—</b></div>
-                  <div class="search-meta-block" data-card-field="marca"><span class="search-meta-label">Marca</span><b class="search-meta-value" id="activeProductBrand">—</b></div>
+                <div class="showroom-detail-type" id="showroomProductType">Producto</div>
+                <div class="search-card-title-row"><div><div class="search-card-title" id="activeProductName">Busca o selecciona un producto</div><div class="showroom-brand-line"><span id="activeProductBrand">—</span><b>●</b></div><div class="search-card-sku" id="activeProductSku" data-card-field="sku">SKU —</div></div></div>
+                <div class="search-card-meta showroom-attrs">
                   <div class="search-meta-block" data-card-field="categoria"><span class="search-meta-label">Categoría</span><b class="search-meta-value" id="activeProductCategory">—</b></div>
-                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="stock"><span class="search-meta-label">Stock</span><b class="search-meta-value" id="activeProductStock">—</b></div>
-                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="precio"><span class="search-meta-label">Precio</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
+                  <div class="search-meta-block optional-card-field" data-card-field="stock"><span class="search-meta-label">Stock disponible</span><b class="search-meta-value" id="activeProductStock">—</b></div>
+                  <div class="search-meta-block optional-card-field" data-card-field="precio"><span class="search-meta-label">Precio sugerido</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
                 </div>
-                <div class="active-meta-line" id="activeProductMeta">Variante activa: —</div>
                 <div class="variant-groups">
-                  <div class="variant-group" data-card-field="talla"><span class="variant-group-label">Talla</span><div class="variant-strip" id="activeSizeStrip"></div></div>
+                  <div class="variant-group" data-card-field="talla"><div class="variant-group-row"><span class="variant-group-label">Talla disponible</span><a>Guía de tallas</a></div><div class="variant-strip" id="activeSizeStrip"></div></div>
                   <div class="variant-group" data-card-field="color"><span class="variant-group-label">Color</span><div class="variant-strip" id="activeColorStrip"></div></div>
                 </div>
-                <div class="search-card-actions-row">
-                  <button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="request">Agregar a solicitud</button>
-                </div>
-                <div class="search-card-expand-hint">Haz clic para ampliar el producto</div>
+                <div class="search-card-actions-row"><button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="request">Solicitar ahora</button></div>
+                <div class="showroom-trust-row"><span>🚚 Envíos</span><span>↻ Cambios</span><span>🛡 Pago seguro</span></div>
               </div>
             </article>
           </aside>
@@ -177,24 +169,6 @@
             <button type="button" class="category-audience-chip" data-audience="unisex">Unisex</button>
           </div>
           <div class="category-browser-toolbar" id="categoryBrowserToolbar"></div>
-          <div class="category-browser-filter-toggle-row">
-            <button class="ghost-btn category-filter-toggle" id="btnToggleCategoryFilters" type="button" aria-expanded="false">Mostrar filtros</button>
-          </div>
-          <div class="category-quick-filters is-collapsed" id="categoryQuickFilters" aria-hidden="true">
-            <div class="category-quick-filters-head">
-              <h3>Filtros rápidos</h3>
-              <p>Refina solo con lo esencial: marca, talla y color.</p>
-            </div>
-            <div class="category-quick-selects">
-              <label><span>Marca</span><select id="categoryQuickBrand"><option value="">Seleccionar</option></select></label>
-              <label><span>Talla</span><select id="categoryQuickSize"><option value="">Seleccionar</option></select></label>
-              <label><span>Color</span><select id="categoryQuickColor"><option value="">Seleccionar</option></select></label>
-            </div>
-            <div class="category-quick-actions">
-              <button class="ghost-btn" id="btnResetQuickFilters" type="button">Limpiar</button>
-              <button class="scan-btn" id="btnApplyQuickFilters" type="button">Aplicar filtros</button>
-            </div>
-          </div>
           <div class="category-browser-grid" id="categoryBrowserGrid"></div>
         </div>
       </section>
