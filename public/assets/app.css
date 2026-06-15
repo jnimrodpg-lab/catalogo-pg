@@ -1001,3 +1001,100 @@ body.search-card-modal-open #activeProductCard.search-card-expanded .product-pho
 
 @media(max-width:1180px){.viewer-mode .product-client-stage{grid-template-columns:1fr}.admin-config-grid{grid-template-columns:1fr}}
 @media(max-width:720px){.viewer-topbar{display:grid}.viewer-topbar select{max-width:100%}.visibility-grid{grid-template-columns:1fr}.viewer-mode .client-app{padding:10px!important}}
+
+
+/* v15 · clean customer product card: no internal location/warehouse, no redundant actions */
+#activeProductCard [data-card-field="ubicacion"],
+#activeProductCard [data-card-field="almacen"]{
+  display:none!important;
+}
+#btnCopyProductInfo,
+#btnOpenProductViewer{
+  display:none!important;
+}
+#btnShareWhatsApp.request-btn,
+#btnShareWhatsApp{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  flex:1 1 100%!important;
+  background:linear-gradient(135deg,#3bb77b,#41d092)!important;
+  border-color:rgba(135,246,189,.28)!important;
+  color:#ffffff!important;
+  box-shadow:0 12px 30px rgba(43,185,120,.22)!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-body{
+  gap:8px!important;
+  padding:18px!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-title{
+  font-size:clamp(30px,3.05vw,52px)!important;
+  line-height:.92!important;
+  margin-right:40px!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-sku{
+  font-size:11px!important;
+  margin-top:2px!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-meta{
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-meta-block{
+  padding:9px 11px!important;
+  min-height:54px!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .active-meta-line{
+  font-size:11px!important;
+  line-height:1.25!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .variant-groups{
+  gap:8px!important;
+  padding:11px!important;
+  flex:0 1 auto!important;
+  min-height:0!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .variant-strip{
+  gap:7px!important;
+  max-height:92px!important;
+  overflow:hidden!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .variant-chip{
+  min-width:34px!important;
+  padding:7px 10px!important;
+  font-size:11px!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-actions-row{
+  margin-top:auto!important;
+  padding-top:8px!important;
+  display:flex!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-action.request-btn,
+body.search-card-modal-open #activeProductCard.search-card-expanded #btnShareWhatsApp{
+  height:50px!important;
+  min-height:50px!important;
+  border-radius:16px!important;
+  font-size:16px!important;
+  font-weight:900!important;
+}
+.selected-panel #activeProductCard .search-card-meta [data-card-field="ubicacion"],
+.selected-panel #activeProductCard .search-card-meta [data-card-field="almacen"]{
+  display:none!important;
+}
+.selected-panel #activeProductCard .search-card-actions-row{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+}
+@media(max-width:1280px){
+  body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-title{
+    font-size:clamp(28px,2.8vw,46px)!important;
+  }
+  body.search-card-modal-open #activeProductCard.search-card-expanded .variant-strip{
+    max-height:80px!important;
+  }
+}

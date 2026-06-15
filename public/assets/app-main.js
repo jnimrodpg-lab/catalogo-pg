@@ -649,13 +649,14 @@
     const p = state.selected;
     if (!p) return toast('Selecciona un producto primero.', 'bad');
     const text = [
-      'Hola, quiero este producto:',
+      'Hola, quiero solicitar este producto:',
       val(p,'nombre') || 'Sin nombre',
       `SKU: ${val(p,'sku') || '—'}`,
       `Talla: ${val(p,'talla') || '—'}`,
       `Color: ${val(p,'color') || '—'}`
     ].join('\n');
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    toast('Solicitud preparada.');
   }
 
   function hydrateViewerTopbar() {

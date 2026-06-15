@@ -43,3 +43,8 @@ V12
 - Configuración de propietario para elegir qué campos aparecen en la card del cliente.
 - Botón WhatsApp opcional para compartir producto.
 - Checklist de publicación: sucursal, Sheet, productos y link cliente.
+
+
+V15
+- Limpia el panel de información del visor: oculta ubicación/almacén para cliente, elimina botones redundantes y deja un único CTA “Solicitar ahora”.
+- Ajusta tamaños, espaciados y distribución para evitar que tallas, colores y botones se monten.
