@@ -6,6 +6,21 @@
   const API = '/api';
   const PAGE_SIZE = 48;
 
+
+  const DEFAULT_UI_CONFIG = {
+    sku:true, marca:true, categoria:true, talla:true, color:true, ubicacion:true, almacen:true,
+    stock:false, precio:false, whatsapp:true
+  };
+
+  function loadClientConfig() {
+    try { return { ...DEFAULT_UI_CONFIG, ...JSON.parse(localStorage.getItem('catalogoClientUiConfig') || '{}') }; }
+    catch { return { ...DEFAULT_UI_CONFIG }; }
+  }
+
+  function saveClientConfig() {
+    localStorage.setItem('catalogoClientUiConfig', JSON.stringify(state.uiConfig || DEFAULT_UI_CONFIG));
+  }
+
   const state = {
     auth: null,
     publicMode: false,
@@ -24,7 +39,8 @@
     authMode: 'login',
     headers: [],
     mapping: {},
-    sidebarCollapsed: localStorage.getItem('catalogoSidebarCollapsed') === '1'
+    sidebarCollapsed: localStorage.getItem('catalogoSidebarCollapsed') === '1',
+    uiConfig: loadClientConfig()
   };
 
   const fields = [
@@ -59,6 +75,8 @@
   function norm(value) {
     return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   }
+
+
 
   function toast(message, type = 'ok') {
     const el = document.createElement('div');
@@ -108,6 +126,7 @@
       $('#btnGoSheet').classList.add('hidden');
       $('#btnShareViewer').classList.add('hidden');
       document.body.classList.add('viewer-mode');
+      hydrateViewerTopbar();
       return;
     }
     const logged = !!state.auth;
@@ -118,6 +137,7 @@
     $('#btnGoSheet').classList.toggle('hidden', !admin);
     $('#btnShareViewer').classList.toggle('hidden', !admin);
     document.body.classList.toggle('viewer-mode', logged && !admin);
+    hydrateViewerTopbar();
     if (logged && !admin) setView('catalog');
   }
 
@@ -155,6 +175,7 @@
     $('#btnDoAuth').addEventListener('click', doAuth);
     $$('.auth-tab').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
     $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.page = 1; await loadSheetConfig(); await loadProducts(); });
+    $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.page = 1; if (state.publicMode) renderLocalPublicProducts(); else await loadProducts(); });
     $('#btnReloadProducts').addEventListener('click', () => loadProducts());
     $('#btnSearch').addEventListener('click', () => { state.page = 1; loadProducts(); });
     $('#btnIndividualView')?.addEventListener('click', () => openActiveProductCard());
@@ -174,6 +195,8 @@
       openActiveProductCard();
     });
     $('#btnCopyProductInfo')?.addEventListener('click', e => { e.stopPropagation(); copySelectedProductInfo(); });
+    $('#btnShareWhatsApp')?.addEventListener('click', e => { e.stopPropagation(); shareSelectedWhatsApp(); });
+    bindClientConfigControls();
     $('#btnScanFake')?.addEventListener('click', () => toast('Puedes pegar o escanear el código con un lector físico en la barra de búsqueda.'));
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
     $('#activeProductCardClose')?.addEventListener('click', e => { e.stopPropagation(); closeActiveProductCard(); });
@@ -250,13 +273,24 @@
   }
 
   function renderBranches() {
+    const options = state.branches.map(b => `<option value="${esc(b.id)}">${esc(b.name || 'Sucursal')}</option>`).join('');
     const select = $('#branchSelect');
-    select.innerHTML = state.branches.map(b => `<option value="${esc(b.id)}">${esc(b.name || 'Sucursal')}</option>`).join('');
-    if (state.branchId) select.value = state.branchId;
+    if (select) {
+      select.innerHTML = options;
+      if (state.branchId) select.value = state.branchId;
+    }
+    const viewerSelect = $('#viewerBranchSelect');
+    if (viewerSelect) {
+      viewerSelect.innerHTML = options;
+      if (state.branchId) viewerSelect.value = state.branchId;
+      viewerSelect.classList.toggle('hidden', state.branches.length <= 1);
+    }
     const b = getBranch();
     if (b) {
       $('#brandSubtitle').textContent = b.name || 'Catálogo';
     }
+    hydrateViewerTopbar();
+    updateAdminChecklist();
   }
 
   async function loadSheetConfig() {
@@ -479,6 +513,7 @@
             <strong>${esc(title)}</strong>
             <small>${esc(subtitle || `SKU ${skuLabel}`)}</small>
             <span class="group-location-mini">${esc(locs[0] || val(p,'ubicacion') || whs[0] || 'Sin ubicación')}</span>
+            <em class="group-open-label">Ver producto →</em>
           </div>
         </div>
         <div><span class="metric-pill">${esc(variants)}</span><small>${esc(variants === 1 ? (val(p,'variante') || '1 variante') : 'variantes')}</small></div>
@@ -503,6 +538,7 @@
     if (first?._groupItems && selected && !selected._groupItems) selected._groupItems = first._groupItems;
     if (first?._groupKey && selected && !selected._groupKey) selected._groupKey = first._groupKey;
     selectProduct(selected);
+    updateAdminChecklist();
   }
 
   function renderEmptyState(message) {
@@ -570,7 +606,7 @@
       $('#activeProductMedia').innerHTML = '<div class="media-empty">Selecciona un producto</div>';
       $('#activeProductName').textContent = 'Busca o selecciona un producto';
       $('#activeProductSku').textContent = 'SKU —';
-      ['activeProductLocation','activeProductWarehouse','activeProductBrand','activeProductCategory'].forEach(id => $(`#${id}`).textContent = '—');
+      ['activeProductLocation','activeProductWarehouse','activeProductBrand','activeProductCategory','activeProductStock','activeProductPrice'].forEach(id => { const el=$(`#${id}`); if(el) el.textContent = '—'; });
       $('#activeProductMeta').textContent = 'Variante activa: —';
       $('#activeSizeStrip').innerHTML = '';
       $('#activeColorStrip').innerHTML = '';
@@ -583,9 +619,12 @@
     $('#activeProductWarehouse').textContent = val(product,'almacen') || '—';
     $('#activeProductBrand').textContent = val(product,'marca') || '—';
     $('#activeProductCategory').textContent = val(product,'categoria') || '—';
+    $('#activeProductStock') && ($('#activeProductStock').textContent = val(product,'stock') || '—');
+    $('#activeProductPrice') && ($('#activeProductPrice').textContent = val(product,'precio') || '—');
     const family = siblingProducts(product);
     $('#activeProductMeta').textContent = `Familia agrupada: ${family.length || 1} variante(s) · activa: talla ${val(product,'talla') || '—'}${val(product,'color') ? ` • color ${val(product,'color')}` : ''}`;
     renderVariantChips(product);
+    applyCardVisibility();
     updateExpandedSideCards();
   }
 
@@ -602,6 +641,63 @@
       `Almacén: ${val(p,'almacen') || '—'}`
     ].join('\n');
     navigator.clipboard?.writeText(text).then(() => toast('Información copiada.')).catch(() => toast(text));
+  }
+
+
+
+  function shareSelectedWhatsApp() {
+    const p = state.selected;
+    if (!p) return toast('Selecciona un producto primero.', 'bad');
+    const text = [
+      'Hola, quiero este producto:',
+      val(p,'nombre') || 'Sin nombre',
+      `SKU: ${val(p,'sku') || '—'}`,
+      `Talla: ${val(p,'talla') || '—'}`,
+      `Color: ${val(p,'color') || '—'}`
+    ].join('\n');
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  }
+
+  function hydrateViewerTopbar() {
+    const b = getBranch();
+    const topbar = $('#viewerTopbar');
+    if (!topbar) return;
+    const title = topbar.querySelector('strong');
+    if (title) title.textContent = b?.name || 'Catálogo de productos';
+  }
+
+  function bindClientConfigControls() {
+    const controls = $$('[data-config-field]');
+    controls.forEach(input => {
+      const key = input.dataset.configField;
+      input.checked = state.uiConfig?.[key] !== false;
+      input.addEventListener('change', () => {
+        state.uiConfig[key] = input.checked;
+        saveClientConfig();
+        applyCardVisibility();
+        toast('Vista cliente actualizada.');
+      });
+    });
+    applyCardVisibility();
+  }
+
+  function applyCardVisibility() {
+    const cfg = state.uiConfig || DEFAULT_UI_CONFIG;
+    $$('[data-card-field]').forEach(el => {
+      const key = el.dataset.cardField;
+      el.classList.toggle('field-hidden', cfg[key] === false);
+    });
+  }
+
+  function updateAdminChecklist() {
+    const set = (id, ok) => {
+      const el = $(`#${id}`);
+      if (el) el.classList.toggle('done', !!ok);
+    };
+    set('checkBranch', !!state.branchId);
+    set('checkSheet', !!state.headers?.length);
+    set('checkProducts', Number(state.summary?.total || state.products?.length || 0) > 0);
+    set('checkLink', ($('#viewerLinkBox')?.textContent || '').startsWith('http'));
   }
 
   function modalItems() {
@@ -880,6 +976,7 @@
       $('#viewerLinkBox').textContent = data.url;
       await navigator.clipboard?.writeText(data.url).catch(() => null);
       toast('Link cliente generado y copiado.');
+      updateAdminChecklist();
       setView('settings');
     } catch (err) { toast(err.message, 'bad'); }
   }

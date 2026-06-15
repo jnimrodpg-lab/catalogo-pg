@@ -958,13 +958,46 @@ body.search-card-modal-open #activeProductCard.search-card-expanded .product-pho
   }
 }
 
-/* v13 · mostrar imagen/video completo dentro del card, sin recortes */
-body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo{
-  background:#020712!important;
-}
-body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo img,
-body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo video{
-  object-fit:contain!important;
-  object-position:center center!important;
-  background:#020712!important;
-}
+/* v14 UX split: clean client viewer + owner configuration */
+.viewer-topbar{display:none;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-radius:22px;background:linear-gradient(135deg,rgba(13,29,42,.92),rgba(8,16,29,.94));}
+.viewer-topbar strong{display:block;font-size:22px;color:#f4fff9;line-height:1.05}
+.viewer-topbar span{display:block;color:#aebfce;font-size:13px;margin-top:3px}
+.viewer-topbar select{max-width:250px;min-height:42px;border-radius:14px;background:rgba(8,17,30,.82);border:1px solid rgba(255,255,255,.10);color:#eaf6ff;padding:0 12px;font-weight:800}
+.viewer-mode .viewer-topbar{display:flex}
+.viewer-mode .sidebar{display:none!important}
+.viewer-mode .client-app{grid-template-columns:minmax(0,1fr)!important;padding:16px!important;max-width:1500px;margin:0 auto}
+.viewer-mode .hero{display:none!important}
+.viewer-mode .main-shell{gap:14px}
+.viewer-mode .client-search-shell{position:sticky;top:10px;z-index:20}
+.viewer-mode .search-client-head strong{font-size:24px}
+.viewer-mode .search-client-head span{font-size:13px}
+.viewer-mode .search-client-actions .mini-btn{display:none}
+.viewer-mode .scan-btn{opacity:.9}
+.viewer-mode .product-client-stage{grid-template-columns:minmax(480px,1fr) minmax(380px,430px)}
+.viewer-mode .selected-panel-title::after{content:' · solo lectura';color:#87efbd;font-weight:800}
+
+.field-hidden{display:none!important}
+.optional-card-field{display:none}
+.optional-card-field:not(.field-hidden){display:grid}
+.search-card-meta:has(.optional-card-field:not(.field-hidden)){grid-template-columns:1fr 1fr}
+
+.group-open-label{display:inline-flex;margin-top:7px;color:#8df0c2;font-style:normal;font-size:11px;font-weight:900;letter-spacing:.02em;opacity:.84}
+.product-row:hover .group-open-label,.product-row.active .group-open-label{opacity:1;transform:translateX(2px)}
+.product-family-row{position:relative}
+.product-family-row::after{content:'';position:absolute;right:14px;top:50%;width:8px;height:8px;border-top:2px solid rgba(141,240,194,.7);border-right:2px solid rgba(141,240,194,.7);transform:translateY(-50%) rotate(45deg);opacity:.45;transition:.18s ease}
+.product-family-row:hover::after,.product-family-row.active::after{opacity:1;right:10px}
+
+.admin-config-grid{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(360px,1.2fr);gap:14px;margin-top:16px}
+.soft-card{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);border-radius:20px;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.soft-card h3{margin:0 0 10px;color:#f4fff9;font-size:17px}
+.small{font-size:12px;line-height:1.45}.muted{color:#aebdcc}
+.check-row{display:flex;align-items:center;gap:9px;padding:10px 0;color:#aebdcc;font-weight:800;border-bottom:1px solid rgba(255,255,255,.05)}
+.check-row:last-child{border-bottom:0}
+.check-row::before{content:'○';display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:rgba(255,255,255,.04);color:#aebdcc;font-weight:900}
+.check-row.done{color:#eafff3}.check-row.done::before{content:'✓';background:linear-gradient(135deg,#2e9f6b,#57d891);color:#06130e}
+.visibility-grid{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:10px;margin-top:12px}
+.visibility-grid label{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:rgba(7,15,25,.58);border:1px solid rgba(255,255,255,.07);color:#dceaf4;font-size:13px;font-weight:800;cursor:pointer}
+.visibility-grid input{accent-color:#57d891}
+
+@media(max-width:1180px){.viewer-mode .product-client-stage{grid-template-columns:1fr}.admin-config-grid{grid-template-columns:1fr}}
+@media(max-width:720px){.viewer-topbar{display:grid}.viewer-topbar select{max-width:100%}.visibility-grid{grid-template-columns:1fr}.viewer-mode .client-app{padding:10px!important}}

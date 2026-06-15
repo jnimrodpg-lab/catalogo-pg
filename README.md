@@ -32,5 +32,14 @@ V10
 - Panel de información queda compacto y sin scroll interno en escritorio.
 - Mejora contraste y lectura de chips de color.
 
-V13
-- Mantiene el card 16:9 del visor, pero cambia imagen/video a object-fit: contain para que el producto se vea completo sin recortes.
+
+V12
+- Ajusta el visor para acercarlo al diseño de referencia: card 16:9, media full-bleed y panel derecho glass overlay interno.
+
+## V14 UX/UI
+- Se separa mejor la experiencia Admin vs Viewer.
+- Viewer público/cliente abre sin sidebar administrativo, con topbar limpia y buscador principal.
+- Resultados agrupados por producto con CTA visual "Ver producto".
+- Configuración de propietario para elegir qué campos aparecen en la card del cliente.
+- Botón WhatsApp opcional para compartir producto.
+- Checklist de publicación: sucursal, Sheet, productos y link cliente.

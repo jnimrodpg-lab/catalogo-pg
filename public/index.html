@@ -46,6 +46,15 @@
     </aside>
 
     <main class="main-shell">
+      <div class="viewer-topbar glass-panel" id="viewerTopbar">
+        <div>
+          <div class="eyebrow">Vista cliente</div>
+          <strong>Catálogo de productos</strong>
+          <span>Busca, revisa variantes y elige el producto que quieres.</span>
+        </div>
+        <select id="viewerBranchSelect" aria-label="Sucursal del catálogo"></select>
+      </div>
+
       <header class="hero glass-panel">
         <div>
           <div class="eyebrow">Consulta para cliente</div>
@@ -62,18 +71,18 @@
         <div class="client-search-shell glass-panel model-one-search">
           <div class="search-client-head">
             <div>
-              <strong>Explorador de productos</strong>
-              <span>Busca, agrupa por nombre y abre la card visual del producto.</span>
+              <strong>Busca tu producto</strong>
+              <span>Escribe nombre, SKU, talla, color o ubicación. Los productos similares se agrupan automáticamente.</span>
             </div>
             <div class="search-client-actions">
               <span class="count-pill"><b id="statTotalTop">0</b> productos</span>
-              <button class="mini-btn" id="btnIndividualView" type="button">Ver individual</button>
+              <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
             </div>
           </div>
           <div class="search-client-row">
-            <input id="searchInput" placeholder="Buscar producto por SKU, nombre, marca, ubicación o código de barras..." autocomplete="off" />
+            <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
             <button class="icon-search-btn" id="btnSearch" type="button">⌕</button>
-            <button class="scan-btn" id="btnScanFake" type="button">Escanear QR / barras</button>
+            <button class="scan-btn" id="btnScanFake" type="button">Escanear código</button>
           </div>
           <div class="filter-row compact-filters">
             <select id="filterBrand"><option value="">Todas las marcas</option></select>
@@ -102,7 +111,7 @@
           </div>
 
           <aside class="selected-panel">
-            <div class="selected-panel-title">Producto seleccionado</div>
+            <div class="selected-panel-title">Vista rápida del producto</div>
             <article class="search-card active-product-card is-clickable" id="activeProductCard" tabindex="0" aria-label="Abrir visor de producto">
               <button class="search-card-expand-close" id="activeProductCardClose" type="button" aria-label="Cerrar visor">×</button>
               <div class="product-photo" id="activeProductMedia"><div class="media-empty">Selecciona un producto</div></div>
@@ -111,23 +120,26 @@
                 <div class="search-card-title-row">
                   <div>
                     <div class="search-card-title" id="activeProductName">Busca o selecciona un producto</div>
-                    <div class="search-card-sku" id="activeProductSku">SKU —</div>
+                    <div class="search-card-sku" id="activeProductSku" data-card-field="sku">SKU —</div>
                   </div>
                 </div>
                 <div class="search-card-meta">
-                  <div class="search-meta-block"><span class="search-meta-label">Ubicación</span><b class="search-meta-value" id="activeProductLocation">—</b></div>
-                  <div class="search-meta-block"><span class="search-meta-label">Almacén</span><b class="search-meta-value store" id="activeProductWarehouse">—</b></div>
-                  <div class="search-meta-block"><span class="search-meta-label">Marca</span><b class="search-meta-value" id="activeProductBrand">—</b></div>
-                  <div class="search-meta-block"><span class="search-meta-label">Categoría</span><b class="search-meta-value" id="activeProductCategory">—</b></div>
+                  <div class="search-meta-block" data-card-field="ubicacion"><span class="search-meta-label">Ubicación</span><b class="search-meta-value" id="activeProductLocation">—</b></div>
+                  <div class="search-meta-block" data-card-field="almacen"><span class="search-meta-label">Almacén</span><b class="search-meta-value store" id="activeProductWarehouse">—</b></div>
+                  <div class="search-meta-block" data-card-field="marca"><span class="search-meta-label">Marca</span><b class="search-meta-value" id="activeProductBrand">—</b></div>
+                  <div class="search-meta-block" data-card-field="categoria"><span class="search-meta-label">Categoría</span><b class="search-meta-value" id="activeProductCategory">—</b></div>
+                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="stock"><span class="search-meta-label">Stock</span><b class="search-meta-value" id="activeProductStock">—</b></div>
+                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="precio"><span class="search-meta-label">Precio</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
                 </div>
                 <div class="active-meta-line" id="activeProductMeta">Variante activa: —</div>
                 <div class="variant-groups">
-                  <div class="variant-group"><span class="variant-group-label">Talla</span><div class="variant-strip" id="activeSizeStrip"></div></div>
-                  <div class="variant-group"><span class="variant-group-label">Color</span><div class="variant-strip" id="activeColorStrip"></div></div>
+                  <div class="variant-group" data-card-field="talla"><span class="variant-group-label">Talla</span><div class="variant-strip" id="activeSizeStrip"></div></div>
+                  <div class="variant-group" data-card-field="color"><span class="variant-group-label">Color</span><div class="variant-strip" id="activeColorStrip"></div></div>
                 </div>
                 <div class="search-card-actions-row">
                   <button class="search-card-action action-btn" id="btnCopyProductInfo" type="button">Copiar</button>
-                  <button class="search-card-action action-btn primary" id="btnOpenProductViewer" type="button">Abrir visor</button>
+                  <button class="search-card-action action-btn" id="btnShareWhatsApp" type="button" data-card-field="whatsapp">WhatsApp</button>
+                  <button class="search-card-action action-btn primary" id="btnOpenProductViewer" type="button">Ver en grande</button>
                 </div>
                 <div class="search-card-expand-hint">Haz clic para ver card grande</div>
               </div>
@@ -181,6 +193,32 @@
             <button class="ghost-btn" id="btnCopyViewer" type="button">Copiar link cliente</button>
           </div>
           <div class="viewer-link-box" id="viewerLinkBox">Aún no se generó link.</div>
+
+          <div class="admin-config-grid">
+            <div class="admin-checklist soft-card">
+              <h3>Estado de publicación</h3>
+              <div class="check-row" id="checkBranch">Sucursal creada</div>
+              <div class="check-row" id="checkSheet">Sheet conectado</div>
+              <div class="check-row" id="checkProducts">Productos importados</div>
+              <div class="check-row" id="checkLink">Link cliente listo</div>
+            </div>
+            <div class="soft-card">
+              <h3>Vista exclusiva del cliente</h3>
+              <p class="muted small">Define qué campos podrá ver el cliente en la card. El modo viewer siempre será solo lectura.</p>
+              <div class="visibility-grid" id="cardFieldConfig">
+                <label><input type="checkbox" data-config-field="sku" checked> SKU</label>
+                <label><input type="checkbox" data-config-field="marca" checked> Marca</label>
+                <label><input type="checkbox" data-config-field="categoria" checked> Categoría</label>
+                <label><input type="checkbox" data-config-field="talla" checked> Talla</label>
+                <label><input type="checkbox" data-config-field="color" checked> Color</label>
+                <label><input type="checkbox" data-config-field="ubicacion" checked> Ubicación</label>
+                <label><input type="checkbox" data-config-field="almacen" checked> Almacén</label>
+                <label><input type="checkbox" data-config-field="stock"> Stock</label>
+                <label><input type="checkbox" data-config-field="precio"> Precio</label>
+                <label><input type="checkbox" data-config-field="whatsapp" checked> WhatsApp</label>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -215,6 +253,6 @@
   </div>
 
   <div class="toast-stack" id="toastStack"></div>
-  <script src="./assets/app-main.js?v=client-catalog-v3"></script>
+  <script src="./assets/app-main.js?v=client-catalog-v14-ux"></script>
 </body>
 </html>
