@@ -719,16 +719,75 @@
 
   function chipStyle(label) {
     const c = norm(label);
-    const map = [
-      [['blanco','white'], '#f8fafc', '#334155', '#e2e8f0'], [['negro','black'], '#151922', '#f8fafc', '#31394b'],
-      [['amarillo','yellow'], '#fff1a8', '#705d00', '#f7d85d'], [['beige','nude'], '#eadfcf', '#6f5d49', '#dac7ad'],
-      [['melon','melón'], '#ffd7b5', '#70431e', '#f0b989'], [['plomo','gris','gray','grey'], '#cbd5e1', '#1f2937', '#94a3b8'],
-      [['arena','sand'], '#f3dfbb', '#6a4b21', '#d6bc86'], [['rosa','pink'], '#ffd7e5', '#7a2947', '#f3a6c2'],
-      [['rojo','red'], '#ffd3d3', '#842222', '#f6aaaa'], [['azul','blue'], '#d9e8ff', '#254b87', '#abc8f5'],
-      [['verde','green'], '#d9fbe8', '#1f6a42', '#a8eac4'], [['lila','morado','azalea'], '#eadcff', '#624a99', '#d6c2fa']
+    const normalizeHex = hex => {
+      if (!hex) return null;
+      let h = String(hex).replace('#','').trim();
+      if (h.length === 3) h = h.split('').map(x => x + x).join('');
+      return h.length === 6 ? `#${h}` : null;
+    };
+    const hexToRgb = hex => {
+      const h = normalizeHex(hex);
+      if (!h) return null;
+      return { r: parseInt(h.slice(1,3),16), g: parseInt(h.slice(3,5),16), b: parseInt(h.slice(5,7),16) };
+    };
+    const mix = (hexA, hexB, amount = .5) => {
+      const a = hexToRgb(hexA), b = hexToRgb(hexB);
+      if (!a || !b) return normalizeHex(hexA) || normalizeHex(hexB) || '#cbd5e1';
+      const blend = k => Math.round(a[k] + (b[k] - a[k]) * amount).toString(16).padStart(2,'0');
+      return `#${blend('r')}${blend('g')}${blend('b')}`;
+    };
+    const luminance = hex => {
+      const rgb = hexToRgb(hex);
+      if (!rgb) return 0;
+      const convert = v => {
+        v /= 255;
+        return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4);
+      };
+      return 0.2126 * convert(rgb.r) + 0.7152 * convert(rgb.g) + 0.0722 * convert(rgb.b);
+    };
+    const palette = [
+      { keys:['blanco','white','perla','hueso','ivory','marfil'], bg:'#F8FAFC' },
+      { keys:['negro','black','ebony'], bg:'#1A1D24' },
+      { keys:['plomo','gris','gray','grey','grafito'], bg:'#94A3B8' },
+      { keys:['gris oscuro','antracita'], bg:'#475569' },
+      { keys:['amarillo','yellow','mostaza'], bg:'#F7D54A' },
+      { keys:['ocre'], bg:'#C28B2C' },
+      { keys:['beige','nude','piel','skin'], bg:'#D8BE9B' },
+      { keys:['arena','sand'], bg:'#D6B486' },
+      { keys:['melon','melón','durazno','peach'], bg:'#FFBA8A' },
+      { keys:['camel','caramelo'], bg:'#B98247' },
+      { keys:['marron','marrón','brown','chocolate','cafe','café'], bg:'#6B442F' },
+      { keys:['rosa palo','palo rosa'], bg:'#E9B8C5' },
+      { keys:['rosa bb','rosa bebe','rosa bebé','baby pink'], bg:'#F7C8D9' },
+      { keys:['chicle','bubblegum'], bg:'#F06AA7' },
+      { keys:['rosa','pink'], bg:'#F3A6C2' },
+      { keys:['fucsia','fuchsia','magenta'], bg:'#D94693' },
+      { keys:['coral'], bg:'#FF7F6F' },
+      { keys:['rojo','red'], bg:'#D94A4A' },
+      { keys:['vino osc','vino oscuro','vino'], bg:'#6E2233' },
+      { keys:['concha vino','conche vino','vino concha'], bg:'#7B2846' },
+      { keys:['uva','purple grape'], bg:'#6D4AA2' },
+      { keys:['lila','azalea','lavanda','lavender'], bg:'#CDB4F6' },
+      { keys:['morado','violeta','purple'], bg:'#7C57C2' },
+      { keys:['azul marino','a marino','marino','navy'], bg:'#1F3A63' },
+      { keys:['cobalto'], bg:'#2E63C4' },
+      { keys:['azul rey'], bg:'#2457E0' },
+      { keys:['celeste','sky'], bg:'#8FD3FF' },
+      { keys:['turquesa','aqua','aguamarina'], bg:'#45D1C7' },
+      { keys:['azul','blue'], bg:'#5D8EF7' },
+      { keys:['verde agua','menta','mint'], bg:'#9BE4C5' },
+      { keys:['verde olivo','olivo'], bg:'#7A8F45' },
+      { keys:['verde','green'], bg:'#4FAF73' },
+      { keys:['lima','neon green'], bg:'#BEEA43' },
+      { keys:['naranja','orange'], bg:'#F59E42' }
     ];
-    const hit = map.find(([keys]) => keys.some(k => c.includes(k)));
-    return hit ? `--chip-bg:${hit[1]};--chip-text:${hit[2]};--chip-border:${hit[3]}` : '';
+    const hit = palette.find(item => item.keys.some(k => c.includes(norm(k))));
+    if (!hit) return '';
+    const bg = hit.bg;
+    const lum = luminance(bg);
+    const textColor = lum > 0.57 ? '#14202A' : '#F8FAFC';
+    const border = lum > 0.57 ? mix(bg, '#000000', .18) : mix(bg, '#FFFFFF', .22);
+    return `--chip-bg:${bg};--chip-text:${textColor};--chip-border:${border}`;
   }
 
   function renderVariantChips(product) {
