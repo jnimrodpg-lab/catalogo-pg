@@ -134,3 +134,48 @@ body.sidebar-collapsed .sidebar-toggle{right:50%;transform:translateX(50%);top:1
 .search-card.search-card-expanded::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
 .search-card-side-nav.left{clip-path:inset(0 0 0 26px round 28px)}
 .search-card-side-nav.right{clip-path:inset(0 26px 0 0 round 28px)}
+
+/* v7 verified modal hierarchy: selected product card always above overlay and side cards */
+body.search-card-modal-open .search-card-overlay.active{
+  z-index:10000!important;
+  pointer-events:auto!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded{
+  position:fixed!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  z-index:10030!important;
+  width:min(75vw,1180px)!important;
+  max-width:75vw!important;
+  height:min(78vh,860px)!important;
+  max-height:78vh!important;
+  opacity:1!important;
+  visibility:visible!important;
+  filter:none!important;
+  backdrop-filter:blur(20px)!important;
+  -webkit-backdrop-filter:blur(20px)!important;
+  pointer-events:auto!important;
+  isolation:isolate!important;
+}
+body.search-card-modal-open .search-card-side-nav{
+  z-index:10010!important;
+  opacity:.66!important;
+  filter:saturate(.85) brightness(.82)!important;
+}
+body.search-card-modal-open .search-card-side-nav.left{
+  left:calc(50% - min(37.5vw,590px) - min(14vw,220px))!important;
+  transform:translateY(-50%) translateX(46px) scale(.84)!important;
+}
+body.search-card-modal-open .search-card-side-nav.right{
+  right:calc(50% - min(37.5vw,590px) - min(14vw,220px))!important;
+  transform:translateY(-50%) translateX(-46px) scale(.84)!important;
+}
+@media(max-width:980px){
+  body.search-card-modal-open #activeProductCard.search-card-expanded{
+    width:94vw!important;
+    max-width:94vw!important;
+    height:84vh!important;
+    max-height:84vh!important;
+  }
+}

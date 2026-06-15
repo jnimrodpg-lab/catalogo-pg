@@ -654,19 +654,67 @@
     ['left','right'].forEach(side => document.getElementById(`expandedSideCard-${side}`)?.classList.remove('visible'));
   }
 
+  function mountExpandedCardOnTop(card) {
+    if (!card || card.dataset.modalMounted === '1') return;
+    const placeholder = document.createElement('span');
+    placeholder.id = 'activeProductCardPlaceholder';
+    placeholder.hidden = true;
+    card.parentNode.insertBefore(placeholder, card);
+    document.body.appendChild(card);
+    card.dataset.modalMounted = '1';
+  }
+
+  function restoreExpandedCardHome(card) {
+    const placeholder = document.getElementById('activeProductCardPlaceholder');
+    if (card && placeholder) {
+      placeholder.parentNode.insertBefore(card, placeholder);
+      placeholder.remove();
+    }
+    if (card) {
+      card.dataset.modalMounted = '0';
+      card.removeAttribute('style');
+    }
+  }
+
+  function forceExpandedCardLayer(card) {
+    if (!card) return;
+    Object.assign(card.style, {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: '10030',
+      isolation: 'isolate',
+      visibility: 'visible',
+      opacity: '1',
+      pointerEvents: 'auto'
+    });
+    const overlay = $('#searchCardOverlay');
+    if (overlay) overlay.style.zIndex = '10000';
+    ['left','right'].forEach(side => {
+      const sideCard = document.getElementById(`expandedSideCard-${side}`);
+      if (sideCard) sideCard.style.zIndex = '10010';
+    });
+  }
+
   function openActiveProductCard() {
     if (!state.selected) return toast('Selecciona un producto primero.', 'bad');
-    $('#activeProductCard')?.classList.add('search-card-expanded');
+    const card = $('#activeProductCard');
+    mountExpandedCardOnTop(card);
     $('#searchCardOverlay')?.classList.add('active');
+    card?.classList.add('search-card-expanded');
     document.body.classList.add('search-card-modal-open');
-    setTimeout(updateExpandedSideCards, 30);
+    forceExpandedCardLayer(card);
+    setTimeout(() => { forceExpandedCardLayer(card); updateExpandedSideCards(); }, 30);
   }
 
   function closeActiveProductCard() {
-    $('#activeProductCard')?.classList.remove('search-card-expanded');
+    const card = $('#activeProductCard');
+    card?.classList.remove('search-card-expanded');
     $('#searchCardOverlay')?.classList.remove('active');
     document.body.classList.remove('search-card-modal-open');
     hideExpandedSideCards();
+    restoreExpandedCardHome(card);
   }
 
   function handleExpandedKeys(e) {

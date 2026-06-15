@@ -20,3 +20,8 @@ App Cloudflare Pages + Functions + D1 para consulta de productos desde Google Sh
 
 V6
 - Corrige jerarquía visual del visor: la card del producto seleccionado queda al frente y las tarjetas Anterior / Siguiente quedan detrás.
+
+
+V7
+- Corrige de forma forzada la jerarquía del visor: la card principal se monta temporalmente en el body y usa z-index superior al overlay y a las cards Anterior/Siguiente.
+- Verificado con `node --check` en `public/assets/app-main.js`.
