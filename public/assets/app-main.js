@@ -630,7 +630,7 @@
       $('#activeProductName').textContent = 'Busca o selecciona un producto';
       $('#activeProductSku').textContent = 'SKU —';
       ['activeProductLocation','activeProductWarehouse','activeProductBrand','activeProductCategory','activeProductStock','activeProductPrice'].forEach(id => { const el=$(`#${id}`); if(el) el.textContent = '—'; });
-      $('#activeProductMeta').textContent = 'Variante activa: —';
+      $('#activeProductMeta').textContent = '';
       $('#activeSizeStrip').innerHTML = '';
       $('#activeColorStrip').innerHTML = '';
       return;
@@ -645,7 +645,7 @@
     $('#activeProductStock') && ($('#activeProductStock').textContent = val(product,'stock') || '—');
     $('#activeProductPrice') && ($('#activeProductPrice').textContent = val(product,'precio') || '—');
     const family = siblingProducts(product);
-    $('#activeProductMeta').textContent = `Familia agrupada: ${family.length || 1} variante(s) · activa: talla ${val(product,'talla') || '—'}${val(product,'color') ? ` • color ${val(product,'color')}` : ''}`;
+    $('#activeProductMeta').textContent = '';
     renderVariantChips(product);
     applyCardVisibility();
     updateRequestButtonState();
