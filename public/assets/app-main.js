@@ -420,7 +420,7 @@
   }
 
   function openCategoryBrowser() {
-    state.categoryAudience = state.categoryAudience || 'all';
+    state.categoryAudience = 'all';
     renderCategoryBrowser();
     $('#categoryBrowser')?.classList.add('open');
     $('#categoryBrowser')?.setAttribute('aria-hidden', 'false');
