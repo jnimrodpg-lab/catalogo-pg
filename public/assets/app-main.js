@@ -526,11 +526,13 @@
     const map = [
       [['blanco','white'], '#f8fafc', '#334155', '#e2e8f0'], [['negro','black'], '#151922', '#f8fafc', '#31394b'],
       [['amarillo','yellow'], '#fff1a8', '#705d00', '#f7d85d'], [['beige','nude'], '#eadfcf', '#6f5d49', '#dac7ad'],
+      [['melon','melón'], '#ffd7b5', '#70431e', '#f0b989'], [['plomo','gris','gray','grey'], '#cbd5e1', '#1f2937', '#94a3b8'],
+      [['arena','sand'], '#f3dfbb', '#6a4b21', '#d6bc86'], [['rosa','pink'], '#ffd7e5', '#7a2947', '#f3a6c2'],
       [['rojo','red'], '#ffd3d3', '#842222', '#f6aaaa'], [['azul','blue'], '#d9e8ff', '#254b87', '#abc8f5'],
       [['verde','green'], '#d9fbe8', '#1f6a42', '#a8eac4'], [['lila','morado','azalea'], '#eadcff', '#624a99', '#d6c2fa']
     ];
     const hit = map.find(([keys]) => keys.some(k => c.includes(k)));
-    return hit ? `background:${hit[1]};color:${hit[2]};border-color:${hit[3]}` : '';
+    return hit ? `--chip-bg:${hit[1]};--chip-text:${hit[2]};--chip-border:${hit[3]}` : '';
   }
 
   function renderVariantChips(product) {

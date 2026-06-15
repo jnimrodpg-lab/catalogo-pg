@@ -16,3 +16,8 @@ App Cloudflare Pages + Functions + D1 para consulta de productos desde Google Sh
 - Build command: vacío
 - Build output directory: `public`
 - D1 binding: `DB`
+
+
+V8
+- El media del visor expandido ahora usa todo el contenedor de la card con `object-fit: cover`.
+- Los chips de color ahora usan variables CSS y paletas para Melón, Plomo, Arena y Rosa, evitando texto oscuro ilegible.

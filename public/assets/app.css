@@ -179,3 +179,67 @@ body.search-card-modal-open .search-card-side-nav.right{
     max-height:84vh!important;
   }
 }
+
+
+/* v8 media and color-chip fixes */
+body.search-card-modal-open #activeProductCard.search-card-expanded{
+  overflow:hidden!important;
+  grid-template-columns:minmax(520px,58%) minmax(360px,42%)!important;
+  padding:22px!important;
+  gap:18px!important;
+  height:min(78vh,850px)!important;
+  max-height:min(78vh,850px)!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo{
+  width:100%!important;
+  height:calc(min(78vh,850px) - 44px)!important;
+  min-height:calc(min(78vh,850px) - 44px)!important;
+  border-radius:22px!important;
+  background:#030812!important;
+  align-self:stretch!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo img,
+body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo video{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+  border-radius:inherit!important;
+  background:#030812!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-body{
+  max-height:calc(min(78vh,850px) - 44px)!important;
+  overflow:auto!important;
+  padding-right:4px!important;
+}
+.variant-chip.variant-color{
+  color:#f8fafc!important;
+  background:rgba(255,255,255,.085)!important;
+  border-color:rgba(255,255,255,.18)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.45);
+}
+.variant-chip.variant-color[style]{
+  color:var(--chip-text,#14202a)!important;
+  background:var(--chip-bg,rgba(255,255,255,.09))!important;
+  border-color:var(--chip-border,rgba(255,255,255,.18))!important;
+  text-shadow:none!important;
+}
+.variant-chip.variant-color.active{
+  box-shadow:0 0 0 2px rgba(255,255,255,.88),0 0 0 4px rgba(125,211,252,.34),0 12px 24px rgba(0,0,0,.22)!important;
+}
+@media(max-width:980px){
+  body.search-card-modal-open #activeProductCard.search-card-expanded{
+    grid-template-columns:1fr!important;
+    overflow:auto!important;
+    padding:14px!important;
+  }
+  body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo{
+    height:46vh!important;
+    min-height:46vh!important;
+  }
+  body.search-card-modal-open #activeProductCard.search-card-expanded .search-card-body{
+    max-height:none!important;
+    overflow:visible!important;
+  }
+}
