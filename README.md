@@ -55,3 +55,9 @@ V17
 - Agrega panel flotante para revisar, quitar, copiar y enviar la solicitud.
 - Limpia la vista viewer con resultados tipo cards compactas y sin campos internos como ubicación/almacén.
 - Mantiene configuración de campos visibles para propietario y comportamiento solo lectura para viewer.
+
+
+V19
+- Ajusta offset del panel de información del visor a 6px arriba, abajo y derecha.
+- Oculta etiqueta Producto y texto de familia agrupada.
+- Reubica botón de cierre visualmente dentro del panel de información.
