@@ -58,6 +58,8 @@
     categoryBrowserProducts: [],
     categoryBrowserPage: 1,
     categoryQuickFiltersOpen: false,
+    mainFiltersOpen: false,
+    loginAccessMode: 'admin',
     variantFilters: { size:'', color:'' }
   };
 
@@ -133,6 +135,7 @@
     $$('.view').forEach(v => v.classList.remove('active'));
     $(`#view${name[0].toUpperCase() + name.slice(1)}`)?.classList.add('active');
     $$('.nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.view === name));
+    document.body.classList.toggle('catalog-fit-mode', name === 'catalog');
   }
 
   function hydrateSessionLabel() {
@@ -198,16 +201,20 @@
     $('#btnCloseAuth').addEventListener('click', () => $('#authModal').classList.remove('show'));
     $('#btnDoAuth').addEventListener('click', doAuth);
     $$('.auth-tab').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
+    $$('.login-role-card').forEach(btn => btn.addEventListener('click', () => setLoginAccessMode(btn.dataset.loginRole || 'admin')));
     $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.categoryBrowserProducts = []; state.page = 1; await loadSheetConfig(); await loadProducts(); });
     $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.categoryBrowserProducts = []; state.page = 1; if (state.publicMode) renderLocalPublicProducts(); else await loadProducts(); });
     $('#btnReloadProducts').addEventListener('click', () => loadProducts());
     $('#btnSearch').addEventListener('click', () => { state.page = 1; loadProducts(); });
     $('#btnIndividualView')?.addEventListener('click', () => openActiveProductCard());
     $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') { state.page = 1; loadProducts(); } });
-    ['filterBrand','filterCategory','filterWarehouse','filterImage'].forEach(id => $(`#${id}`).addEventListener('change', () => { state.page = 1; loadProducts(); renderAppliedFilters(); }));
+    ['filterBrand','filterCategory','filterWarehouse','filterImage'].forEach(id => $(`#${id}`)?.addEventListener('change', () => { state.page = 1; loadProducts(); renderAppliedFilters(); }));
+    $('#filterSize')?.addEventListener('change', () => { state.variantFilters.size = $('#filterSize').value || ''; state.page = 1; loadProducts(); renderAppliedFilters(); });
+    $('#filterColor')?.addEventListener('change', () => { state.variantFilters.color = $('#filterColor').value || ''; state.page = 1; loadProducts(); renderAppliedFilters(); });
     const clearFiltersAction = () => { resetAllFilters(false); state.page = 1; loadProducts(); };
     $('#btnClearFilters')?.addEventListener('click', clearFiltersAction);
     $('#btnHiddenClearFilters')?.addEventListener('click', clearFiltersAction);
+    $('#btnDisableFilters')?.addEventListener('click', () => { resetAllFilters(false); setMainFiltersOpen(false); state.page = 1; loadProducts(); });
     $('#btnPrevPage').addEventListener('click', () => { if (state.page > 1) { state.page--; loadProducts(); } });
     $('#btnNextPage').addEventListener('click', () => { if (state.page < state.totalPages) { state.page++; loadProducts(); } });
     $('#btnProbeSheet').addEventListener('click', probeSheet);
@@ -228,7 +235,7 @@
     $('#btnCopyRequest')?.addEventListener('click', copyRequestCart);
     $('#btnSendRequest')?.addEventListener('click', sendRequestCart);
     bindClientConfigControls();
-    $('#btnScanFake')?.addEventListener('click', () => toast('Puedes pegar o escanear el código con un lector físico en la barra de búsqueda.'));
+    $('#btnToggleMainFilters')?.addEventListener('click', () => setMainFiltersOpen(!state.mainFiltersOpen));
     $('#btnOpenCategoryBrowser')?.addEventListener('click', openCategoryBrowser);
     $('#btnCloseCategoryBrowser')?.addEventListener('click', closeCategoryBrowser);
     $('#categoryBrowser')?.addEventListener('click', e => { if (e.target?.id === 'categoryBrowser') closeCategoryBrowser(); });
@@ -246,11 +253,35 @@
     renderAppliedFilters();
   }
 
+  function setMainFiltersOpen(open) {
+    state.mainFiltersOpen = !!open;
+    const panel = $('#mainFilterPanel');
+    const btn = $('#btnToggleMainFilters');
+    if (panel) {
+      panel.classList.toggle('hidden', !state.mainFiltersOpen);
+      panel.setAttribute('aria-hidden', state.mainFiltersOpen ? 'false' : 'true');
+    }
+    if (btn) {
+      btn.classList.toggle('active', state.mainFiltersOpen);
+      btn.setAttribute('aria-expanded', state.mainFiltersOpen ? 'true' : 'false');
+      btn.textContent = state.mainFiltersOpen ? 'Ocultar filtros' : 'Filtros';
+    }
+  }
+
+  function setLoginAccessMode(mode) {
+    state.loginAccessMode = mode === 'viewer' ? 'viewer' : 'admin';
+    $$('.login-role-card').forEach(btn => btn.classList.toggle('active', btn.dataset.loginRole === state.loginAccessMode));
+    const role = $('#accountRole');
+    if (role) role.value = state.loginAccessMode;
+    document.body.classList.toggle('login-as-viewer', state.loginAccessMode === 'viewer');
+  }
+
   function setAuthMode(mode) {
     state.authMode = mode;
     $$('.auth-tab').forEach(b => b.classList.toggle('active', b.dataset.authMode === mode));
     $$('.register-only').forEach(el => el.classList.toggle('hidden', mode !== 'register'));
-    $('#btnDoAuth').textContent = mode === 'register' ? 'Crear cuenta' : 'Ingresar';
+    $('#loginRoleChoice')?.classList.toggle('register-mode', mode === 'register');
+    $('#btnDoAuth').textContent = mode === 'register' ? 'Crear cuenta' : (state.loginAccessMode === 'viewer' ? 'Ingresar como visualizador' : 'Ingresar como administrador');
     $('#authStatus').textContent = '';
   }
 
@@ -279,6 +310,7 @@
     $('#authStatus').textContent = 'Validando...';
     try {
       state.auth = await api(state.authMode === 'register' ? '/register' : '/login', { method:'POST', body: JSON.stringify(payload) });
+      if (state.authMode !== 'register' && state.loginAccessMode === 'viewer') state.auth.role = 'viewer';
       $('#authModal').classList.remove('show');
       $('#authStatus').textContent = '';
       await loadBranches();
@@ -515,7 +547,7 @@
 
   function resetAllFilters(includeSearch = false) {
     if (includeSearch && $('#searchInput')) $('#searchInput').value = '';
-    ['filterBrand','filterCategory','filterWarehouse','filterImage'].forEach(id => { const el = $(`#${id}`); if (el) el.value = ''; });
+    ['filterBrand','filterCategory','filterWarehouse','filterImage','filterSize','filterColor'].forEach(id => { const el = $(`#${id}`); if (el) el.value = ''; });
     state.categoryAudienceFilter = '';
     state.variantFilters = { size:'', color:'' };
     resetQuickFiltersUI();
@@ -775,6 +807,7 @@
       renderFacets();
       renderSummary();
       renderProducts(state.products);
+      renderMainVariantFilters();
       renderAppliedFilters();
     } catch (err) {
       renderEmptyState(err.message);
@@ -807,6 +840,7 @@
       renderFacets();
       renderSummary();
       renderProducts(state.products);
+      renderMainVariantFilters();
       renderAppliedFilters();
     } catch (err) {
       renderEmptyState(err.message || 'No se pudo cargar el catálogo público.');
@@ -858,7 +892,26 @@
     fillSelect('filterBrand', 'Todas las marcas', state.facets.brand_options || state.facets.brands || []);
     fillSelect('filterCategory', 'Todas las categorías', state.facets.category_options || state.facets.categories || []);
     fillSelect('filterWarehouse', 'Todos los almacenes', state.facets.warehouse_options || state.facets.warehouses || []);
+    renderMainVariantFilters();
     renderAppliedFilters();
+  }
+
+  function currentVariantFacetValues(key) {
+    const source = [];
+    (state.currentGroups || state.currentResults || state.products || []).forEach(group => {
+      const items = group?._groupItems?.length ? group._groupItems : [group];
+      items.forEach(item => source.push(item));
+    });
+    return [...new Map(source.map(p => val(p,key)).filter(Boolean).map(v => [norm(v), v])).values()].sort((a,b)=>String(a).localeCompare(String(b),'es'));
+  }
+
+  function renderMainVariantFilters() {
+    fillSelect('filterSize', 'Todas las tallas', currentVariantFacetValues('talla'));
+    fillSelect('filterColor', 'Todos los colores', currentVariantFacetValues('color'));
+    const sizeEl = $('#filterSize');
+    const colorEl = $('#filterColor');
+    if (sizeEl) sizeEl.value = state.variantFilters.size || '';
+    if (colorEl) colorEl.value = state.variantFilters.color || '';
   }
 
   function fillSelect(id, label, values) {
@@ -1678,6 +1731,9 @@
   }
 
 
+  setLoginAccessMode('admin');
   setAuthMode('login');
+  setMainFiltersOpen(false);
+  document.body.classList.add('catalog-fit-mode');
   init();
 })();

@@ -82,15 +82,18 @@
           <div class="search-client-row simplified-search-row">
             <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
             <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
-            <button class="scan-btn" id="btnScanFake" type="button">Escanear código</button>
+            <button class="scan-btn filter-main-btn" id="btnToggleMainFilters" type="button" aria-expanded="false">Filtros</button>
             <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Buscar por categoría</button>
           </div>
-          <div class="filter-row compact-filters hidden" aria-hidden="true">
+          <div class="filter-row compact-filters hidden" id="mainFilterPanel" aria-hidden="true">
             <select id="filterBrand"><option value="">Todas las marcas</option></select>
             <select id="filterCategory"><option value="">Todas las categorías</option></select>
-            <select id="filterWarehouse"><option value="">Todos los almacenes</option></select>
-            <select id="filterImage"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
+            <select id="filterSize"><option value="">Todas las tallas</option></select>
+            <select id="filterColor"><option value="">Todos los colores</option></select>
             <button class="ghost-btn" id="btnHiddenClearFilters" type="button">Limpiar filtros</button>
+            <button class="ghost-btn danger-soft" id="btnDisableFilters" type="button">Desactivar filtros</button>
+            <select id="filterWarehouse" class="hidden"><option value="">Todos los almacenes</option></select>
+            <select id="filterImage" class="hidden"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
           </div>
         </div>
 
@@ -281,6 +284,16 @@
           <h2>Entrar al catálogo</h2>
           <p>Admin puede vincular Sheets y configurar. Viewer solo observa y busca productos.</p>
         </div>
+      </div>
+      <div class="login-role-choice" id="loginRoleChoice" aria-label="Tipo de ingreso">
+        <button class="login-role-card active" data-login-role="admin" type="button">
+          <b>Ingresar como administrador</b>
+          <span>Vincular Sheet, importar productos y configurar el catálogo.</span>
+        </button>
+        <button class="login-role-card" data-login-role="viewer" type="button">
+          <b>Ingresar como visualizador</b>
+          <span>Solo ver, buscar y agregar productos a solicitud.</span>
+        </button>
       </div>
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth-mode="login" type="button">Ingresar</button>
