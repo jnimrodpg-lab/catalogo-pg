@@ -298,11 +298,12 @@
       const branch = data.branch || { id:'public', name:'Catálogo' };
       state.branches = [branch];
       state.branchId = branch.id;
-      state.products = data.sheet?.imported_products || [];
-      state.summary = { total: state.products.length, with_image: state.products.filter(p => mediaUrl(p)).length, with_stock: state.products.filter(p => val(p,'stock')).length };
-      state.categoryBrowserProducts = state.products.slice();
+      state.products = [];
+      state.summary = data.sheet?.summary || { total: Number(data.sheet?.product_count || 0), with_image: 0, with_stock: 0 };
+      state.facets = data.sheet?.facets || {};
+      state.categoryBrowserProducts = [];
       renderBranches();
-      renderLocalPublicProducts();
+      await loadProducts();
       const company = branch.name || 'Catálogo';
       $('#brandName').textContent = company;
     } catch (err) {
@@ -373,7 +374,15 @@
 
   async function hydrateCategoryBrowserProducts(force = false) {
     if (!force && Array.isArray(state.categoryBrowserProducts) && state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
-    if (state.publicMode) {
+    if (state.publicMode && state.token) {
+      try {
+        const params = new URLSearchParams({ page: '1', limit: '5000', group_by: 'name' });
+        const data = await api(`/view-links/${encodeURIComponent(state.token)}/products?${params}`);
+        state.categoryBrowserProducts = (data.items || []).flatMap(p => p._groupItems || [p]);
+        if (state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
+      } catch (err) {
+        console.warn('No se pudo precargar categorías públicas', err);
+      }
       state.categoryBrowserProducts = Array.isArray(state.products) ? state.products.slice() : [];
       return state.categoryBrowserProducts;
     }
@@ -593,8 +602,7 @@
     state.page = 1;
     closeCategoryBrowser();
     renderAppliedFilters();
-    if (state.publicMode) renderLocalPublicProducts();
-    else loadProducts();
+    loadProducts();
   }
 
   function renderAppliedFilters() {
@@ -630,8 +638,7 @@
     syncQuickFiltersFromState();
     renderAppliedFilters();
     state.page = 1;
-    if (state.publicMode) renderLocalPublicProducts();
-    else loadProducts();
+    loadProducts();
   }
 
   function filterGroupedProductsByVariants(groups) {
@@ -698,13 +705,12 @@
     state.page = 1;
     renderAppliedFilters();
     closeCategoryBrowser();
-    if (state.publicMode) renderLocalPublicProducts();
-    else loadProducts();
+    loadProducts();
     toast(`Mostrando categoría: ${category}`);
   }
 
   async function loadProducts() {
-    if (state.publicMode) return renderLocalPublicProducts();
+    if (state.publicMode) return loadPublicProducts();
     if (!state.branchId || !state.auth) return;
     const useLocalAdvancedFiltering = !!(state.variantFilters.size || state.variantFilters.color);
     const params = new URLSearchParams({ page: String(useLocalAdvancedFiltering ? 1 : state.page), limit: String(useLocalAdvancedFiltering ? 5000 : PAGE_SIZE), q: $('#searchInput').value.trim(), group_by: 'name' });
@@ -742,6 +748,38 @@
       renderAppliedFilters();
     } catch (err) {
       renderEmptyState(err.message);
+    }
+  }
+
+
+  async function loadPublicProducts() {
+    if (!state.token) return renderLocalPublicProducts();
+    const useServerAdvancedFiltering = !!(state.variantFilters.size || state.variantFilters.color);
+    const params = new URLSearchParams({
+      page: String(state.page),
+      limit: String(PAGE_SIZE),
+      q: $('#searchInput')?.value.trim() || '',
+      group_by: 'name'
+    });
+    const map = { filterBrand:'brand', filterCategory:'category', filterWarehouse:'warehouse', filterImage:'image_state' };
+    Object.entries(map).forEach(([id,key]) => { const v = $(`#${id}`)?.value || ''; if (v) params.set(key, v); });
+    if (state.variantFilters.size) params.set('size', state.variantFilters.size);
+    if (state.variantFilters.color) params.set('color', state.variantFilters.color);
+    try {
+      const data = await api(`/view-links/${encodeURIComponent(state.token)}/products?${params}`);
+      state.products = data.items || [];
+      state.facets = data.facets || {};
+      state.summary = data.summary || {};
+      state.total = Number(data.total || 0);
+      state.groupTotalProducts = Number(data.group_total_products || 0);
+      state.page = Number(data.page || 1);
+      state.totalPages = Number(data.total_pages || 1);
+      renderFacets();
+      renderSummary();
+      renderProducts(state.products);
+      renderAppliedFilters();
+    } catch (err) {
+      renderEmptyState(err.message || 'No se pudo cargar el catálogo público.');
     }
   }
 
