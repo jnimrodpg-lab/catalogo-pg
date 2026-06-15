@@ -48,3 +48,10 @@ V12
 V15
 - Limpia el panel de información del visor: oculta ubicación/almacén para cliente, elimina botones redundantes y deja un único CTA “Solicitar ahora”.
 - Ajusta tamaños, espaciados y distribución para evitar que tallas, colores y botones se monten.
+
+V17
+- Agrega flujo de solicitud/mini carrito para clientes.
+- Reemplaza el CTA principal por “Agregar a solicitud” con estado “Agregado ✓”.
+- Agrega panel flotante para revisar, quitar, copiar y enviar la solicitud.
+- Limpia la vista viewer con resultados tipo cards compactas y sin campos internos como ubicación/almacén.
+- Mantiene configuración de campos visibles para propietario y comportamiento solo lectura para viewer.

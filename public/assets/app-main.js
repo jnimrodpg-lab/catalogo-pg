@@ -8,8 +8,8 @@
 
 
   const DEFAULT_UI_CONFIG = {
-    sku:true, marca:true, categoria:true, talla:true, color:true, ubicacion:true, almacen:true,
-    stock:false, precio:false, whatsapp:true
+    sku:true, marca:true, categoria:true, talla:true, color:true, ubicacion:false, almacen:false,
+    stock:false, precio:false, request:true
   };
 
   function loadClientConfig() {
@@ -19,6 +19,15 @@
 
   function saveClientConfig() {
     localStorage.setItem('catalogoClientUiConfig', JSON.stringify(state.uiConfig || DEFAULT_UI_CONFIG));
+  }
+
+  function loadRequestCart() {
+    try { return JSON.parse(sessionStorage.getItem('catalogoRequestCart') || '[]'); }
+    catch { return []; }
+  }
+
+  function saveRequestCart() {
+    sessionStorage.setItem('catalogoRequestCart', JSON.stringify(state.requestItems || []));
   }
 
   const state = {
@@ -40,7 +49,8 @@
     headers: [],
     mapping: {},
     sidebarCollapsed: localStorage.getItem('catalogoSidebarCollapsed') === '1',
-    uiConfig: loadClientConfig()
+    uiConfig: loadClientConfig(),
+    requestItems: loadRequestCart()
   };
 
   const fields = [
@@ -195,12 +205,18 @@
       openActiveProductCard();
     });
     $('#btnCopyProductInfo')?.addEventListener('click', e => { e.stopPropagation(); copySelectedProductInfo(); });
-    $('#btnShareWhatsApp')?.addEventListener('click', e => { e.stopPropagation(); shareSelectedWhatsApp(); });
+    $('#btnShareWhatsApp')?.addEventListener('click', e => { e.stopPropagation(); addSelectedToRequest(); });
+    $('#btnRequestFloating')?.addEventListener('click', openRequestDrawer);
+    $('#btnCloseRequestDrawer')?.addEventListener('click', closeRequestDrawer);
+    $('#btnClearRequest')?.addEventListener('click', clearRequestCart);
+    $('#btnCopyRequest')?.addEventListener('click', copyRequestCart);
+    $('#btnSendRequest')?.addEventListener('click', sendRequestCart);
     bindClientConfigControls();
     $('#btnScanFake')?.addEventListener('click', () => toast('Puedes pegar o escanear el código con un lector físico en la barra de búsqueda.'));
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
     $('#activeProductCardClose')?.addEventListener('click', e => { e.stopPropagation(); closeActiveProductCard(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeActiveProductCard(); if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeActiveProductCard(); closeRequestDrawer(); } if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e); });
+    renderRequestCart();
   }
 
   function setAuthMode(mode) {
@@ -386,7 +402,7 @@
     $('#statImages').textContent = state.summary.with_image ?? 0;
     $('#statStock').textContent = state.summary.with_stock ?? 0;
     const groupText = state.groupTotalProducts ? ` · ${state.groupTotalProducts} variantes/registros` : '';
-    $('#resultSummary').textContent = `Mostrando ${state.products.length} familias de ${state.total || state.products.length}${groupText}`;
+    $('#resultSummary').textContent = state.publicMode || isViewer() ? `Mostrando ${state.products.length} productos agrupados` : `Mostrando ${state.products.length} familias de ${state.total || state.products.length}${groupText}`;
     $('#pageSummary').textContent = `Página ${state.page} de ${state.totalPages}`;
     $('#paginationText').textContent = `Página ${state.page} / ${state.totalPages}`;
     $('#btnPrevPage').disabled = state.page <= 1;
@@ -435,9 +451,9 @@
       if (id) {
         const poster = `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1200`;
         const proxy = `${API}/drive-video?id=${encodeURIComponent(id)}`;
-        return `<video src="${esc(proxy)}" poster="${esc(poster)}" controls playsinline preload="metadata"></video>`;
+        return `<video src="${esc(proxy)}" poster="${esc(poster)}" controls muted playsinline preload="metadata"></video>`;
       }
-      if (/\.mp4($|\?)/i.test(src)) return `<video src="${esc(src)}" controls ${mode === 'card' ? 'muted' : ''}></video>`;
+      if (/\.mp4($|\?)/i.test(src)) return `<video src="${esc(src)}" controls muted playsinline preload="metadata"></video>`;
     }
     const finalSrc = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1600` : src;
     return `<img src="${esc(finalSrc)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove();">`;
@@ -512,7 +528,7 @@
           <div class="group-info">
             <strong>${esc(title)}</strong>
             <small>${esc(subtitle || `SKU ${skuLabel}`)}</small>
-            <span class="group-location-mini">${esc(locs[0] || val(p,'ubicacion') || whs[0] || 'Sin ubicación')}</span>
+            <span class="group-location-mini">${esc(`${sizes.length || '—'} tallas · ${colors.length || '—'} colores`)}</span>
             <em class="group-open-label">Ver producto →</em>
           </div>
         </div>
@@ -625,6 +641,7 @@
     $('#activeProductMeta').textContent = `Familia agrupada: ${family.length || 1} variante(s) · activa: talla ${val(product,'talla') || '—'}${val(product,'color') ? ` • color ${val(product,'color')}` : ''}`;
     renderVariantChips(product);
     applyCardVisibility();
+    updateRequestButtonState();
     updateExpandedSideCards();
   }
 
@@ -645,18 +662,112 @@
 
 
 
-  function shareSelectedWhatsApp() {
+  function requestItemKey(product) {
+    return [productGroupKey(product), val(product,'sku'), val(product,'talla'), val(product,'color'), val(product,'variante')].map(norm).join('¦');
+  }
+
+  function addSelectedToRequest() {
     const p = state.selected;
     if (!p) return toast('Selecciona un producto primero.', 'bad');
-    const text = [
-      'Hola, quiero solicitar este producto:',
-      val(p,'nombre') || 'Sin nombre',
-      `SKU: ${val(p,'sku') || '—'}`,
-      `Talla: ${val(p,'talla') || '—'}`,
-      `Color: ${val(p,'color') || '—'}`
-    ].join('\n');
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-    toast('Solicitud preparada.');
+    if (!val(p,'talla') && siblingProducts(p).some(x => val(x,'talla'))) return toast('Selecciona una talla antes de agregar.', 'bad');
+    if (!val(p,'color') && siblingProducts(p).some(x => val(x,'color'))) return toast('Selecciona un color antes de agregar.', 'bad');
+    const key = requestItemKey(p);
+    if ((state.requestItems || []).some(item => item.key === key)) {
+      toast('Ese producto ya está en la solicitud.');
+      updateRequestButtonState();
+      return;
+    }
+    state.requestItems.push({
+      key,
+      nombre: val(p,'nombre') || 'Sin nombre',
+      sku: val(p,'sku') || val(p,'barras') || '',
+      marca: val(p,'marca') || '',
+      categoria: val(p,'categoria') || '',
+      talla: val(p,'talla') || '',
+      color: val(p,'color') || '',
+      imagen: val(p,'imagen') || '',
+      video: val(p,'video') || ''
+    });
+    saveRequestCart();
+    renderRequestCart();
+    updateRequestButtonState();
+    toast('Producto agregado a la solicitud.');
+  }
+
+  function updateRequestButtonState() {
+    const btn = $('#btnShareWhatsApp');
+    if (!btn) return;
+    const p = state.selected;
+    const exists = p && (state.requestItems || []).some(item => item.key === requestItemKey(p));
+    btn.textContent = exists ? 'Agregado ✓' : 'Agregar a solicitud';
+    btn.classList.toggle('added', !!exists);
+  }
+
+  function removeRequestItem(key) {
+    state.requestItems = (state.requestItems || []).filter(item => item.key !== key);
+    saveRequestCart();
+    renderRequestCart();
+    updateRequestButtonState();
+  }
+
+  function renderRequestCart() {
+    const items = state.requestItems || [];
+    const count = $('#requestCartCount');
+    if (count) count.textContent = String(items.length);
+    $('#btnRequestFloating')?.classList.toggle('visible', items.length > 0);
+    const list = $('#requestCartList');
+    if (!list) return;
+    if (!items.length) {
+      list.innerHTML = '<div class="request-empty">Aún no agregaste productos. Selecciona una talla/color y presiona “Agregar a solicitud”.</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const src = item.imagen || item.video || '';
+      const id = driveId(src);
+      const thumb = src ? (id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w220` : src) : '';
+      return `<div class="request-item">
+        <div class="request-thumb">${thumb ? `<img src="${esc(thumb)}" alt="${esc(item.nombre)}">` : '—'}</div>
+        <div class="request-info"><strong>${esc(item.nombre)}</strong><span>${esc([item.sku, item.marca].filter(Boolean).join(' · ') || 'Producto')}</span><small>${esc([item.talla && `Talla ${item.talla}`, item.color && `Color ${item.color}`].filter(Boolean).join(' · ') || 'Sin variante')}</small></div>
+        <button type="button" class="request-remove" data-remove-request="${esc(item.key)}">×</button>
+      </div>`;
+    }).join('');
+    $$('[data-remove-request]', list).forEach(btn => btn.addEventListener('click', () => removeRequestItem(btn.dataset.removeRequest)));
+  }
+
+  function requestCartText() {
+    const items = state.requestItems || [];
+    return ['Hola, quiero solicitar estos productos:', ...items.map((item, i) => `${i + 1}. ${item.nombre}${item.sku ? ` · SKU ${item.sku}` : ''}${item.talla ? ` · Talla ${item.talla}` : ''}${item.color ? ` · Color ${item.color}` : ''}`)].join('\n');
+  }
+
+  function openRequestDrawer() {
+    renderRequestCart();
+    $('#requestDrawer')?.classList.add('open');
+    $('#requestDrawer')?.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeRequestDrawer() {
+    $('#requestDrawer')?.classList.remove('open');
+    $('#requestDrawer')?.setAttribute('aria-hidden', 'true');
+  }
+
+  function clearRequestCart() {
+    state.requestItems = [];
+    saveRequestCart();
+    renderRequestCart();
+    updateRequestButtonState();
+    toast('Solicitud vacía.');
+  }
+
+  function copyRequestCart() {
+    if (!(state.requestItems || []).length) return toast('Agrega productos primero.', 'bad');
+    const text = requestCartText();
+    navigator.clipboard?.writeText(text).then(() => toast('Solicitud copiada.')).catch(() => toast(text));
+  }
+
+  function sendRequestCart() {
+    if (!(state.requestItems || []).length) return toast('Agrega productos primero.', 'bad');
+    window.open(`https://wa.me/?text=${encodeURIComponent(requestCartText())}`, '_blank', 'noopener,noreferrer');
+    toast('Solicitud lista para enviar.');
   }
 
   function hydrateViewerTopbar() {
@@ -686,7 +797,8 @@
     const cfg = state.uiConfig || DEFAULT_UI_CONFIG;
     $$('[data-card-field]').forEach(el => {
       const key = el.dataset.cardField;
-      el.classList.toggle('field-hidden', cfg[key] === false);
+      const visible = key === 'request' ? cfg.request !== false : cfg[key] !== false;
+      el.classList.toggle('field-hidden', !visible);
     });
   }
 
@@ -796,6 +908,32 @@
     });
   }
 
+
+  function autoplayExpandedVideo() {
+    const card = $('#activeProductCard');
+    const video = card?.querySelector('.product-photo video');
+    if (!video) return;
+    try {
+      video.muted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.currentTime = 0;
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          video.setAttribute('data-autoplay-blocked', '1');
+        });
+      }
+    } catch {}
+  }
+
+  function stopExpandedVideo() {
+    const card = $('#activeProductCard');
+    card?.querySelectorAll('.product-photo video').forEach(video => {
+      try { video.pause(); } catch {}
+    });
+  }
+
   function openActiveProductCard() {
     if (!state.selected) return toast('Selecciona un producto primero.', 'bad');
     const card = $('#activeProductCard');
@@ -804,10 +942,11 @@
     card?.classList.add('search-card-expanded');
     document.body.classList.add('search-card-modal-open');
     forceExpandedCardLayer(card);
-    setTimeout(() => { forceExpandedCardLayer(card); updateExpandedSideCards(); }, 30);
+    setTimeout(() => { forceExpandedCardLayer(card); updateExpandedSideCards(); autoplayExpandedVideo(); }, 30);
   }
 
   function closeActiveProductCard() {
+    stopExpandedVideo();
     const card = $('#activeProductCard');
     card?.classList.remove('search-card-expanded');
     $('#searchCardOverlay')?.classList.remove('active');

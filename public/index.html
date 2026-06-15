@@ -137,7 +137,7 @@
                   <div class="variant-group" data-card-field="color"><span class="variant-group-label">Color</span><div class="variant-strip" id="activeColorStrip"></div></div>
                 </div>
                 <div class="search-card-actions-row">
-                  <button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="whatsapp">Solicitar ahora</button>
+                  <button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="request">Agregar a solicitud</button>
                 </div>
                 <div class="search-card-expand-hint">Haz clic para ampliar el producto</div>
               </div>
@@ -209,11 +209,11 @@
                 <label><input type="checkbox" data-config-field="categoria" checked> Categoría</label>
                 <label><input type="checkbox" data-config-field="talla" checked> Talla</label>
                 <label><input type="checkbox" data-config-field="color" checked> Color</label>
-                <label><input type="checkbox" data-config-field="ubicacion" checked> Ubicación</label>
-                <label><input type="checkbox" data-config-field="almacen" checked> Almacén</label>
+                <label><input type="checkbox" data-config-field="ubicacion"> Ubicación</label>
+                <label><input type="checkbox" data-config-field="almacen"> Almacén</label>
                 <label><input type="checkbox" data-config-field="stock"> Stock</label>
                 <label><input type="checkbox" data-config-field="precio"> Precio</label>
-                <label><input type="checkbox" data-config-field="whatsapp" checked> WhatsApp</label>
+                <label><input type="checkbox" data-config-field="request" checked> Solicitud / carrito</label>
               </div>
             </div>
           </div>
@@ -250,7 +250,31 @@
     </div>
   </div>
 
+
+  <button class="request-floating" id="btnRequestFloating" type="button" aria-label="Ver solicitud">
+    <span>Solicitud</span><b id="requestCartCount">0</b>
+  </button>
+
+  <div class="request-drawer" id="requestDrawer" aria-hidden="true">
+    <div class="request-drawer-panel glass-panel">
+      <div class="request-drawer-head">
+        <div>
+          <div class="eyebrow">Solicitud del cliente</div>
+          <h2>Productos elegidos</h2>
+          <p>Revisa tallas y colores antes de enviar o copiar la solicitud.</p>
+        </div>
+        <button class="search-card-expand-close request-close" id="btnCloseRequestDrawer" type="button" aria-label="Cerrar solicitud">×</button>
+      </div>
+      <div class="request-list" id="requestCartList"></div>
+      <div class="request-actions">
+        <button class="ghost-btn" id="btnClearRequest" type="button">Vaciar</button>
+        <button class="ghost-btn" id="btnCopyRequest" type="button">Copiar solicitud</button>
+        <button class="primary-btn" id="btnSendRequest" type="button">Enviar solicitud</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-stack" id="toastStack"></div>
-  <script src="./assets/app-main.js?v=client-catalog-v14-ux"></script>
+  <script src="./assets/app-main.js?v=client-catalog-v17-request"></script>
 </body>
 </html>
