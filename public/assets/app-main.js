@@ -235,6 +235,9 @@
     $('#btnApplyQuickFilters')?.addEventListener('click', applyQuickFiltersFromModal);
     $('#btnResetQuickFilters')?.addEventListener('click', () => { resetQuickFiltersUI(); renderQuickFilterOptions(categorySourceProducts()); });
     $('#btnToggleCategoryFilters')?.addEventListener('click', toggleCategoryQuickFilters);
+    ['categoryQuickBrand','categoryQuickSize','categoryQuickColor','categoryQuickWarehouse','categoryQuickImage'].forEach(id => {
+      $(`#${id}`)?.addEventListener('change', () => renderQuickFilterOptions(categorySourceProducts()));
+    });
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
     $('#activeProductCardClose')?.addEventListener('click', e => { e.stopPropagation(); closeActiveProductCard(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeActiveProductCard(); closeRequestDrawer(); closeCategoryBrowser(); } if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e); });
@@ -518,16 +521,39 @@
     renderAppliedFilters();
   }
 
-  function buildQuickFilterFacets(source) {
-    const scoped = (source || []).filter(product => {
-      const audience = state.categoryAudience || 'all';
-      if (audience === 'all') return true;
-      return inferAudience(product) === audience;
+  function getQuickFilterSelections() {
+    return {
+      brand: $('#categoryQuickBrand')?.value || $('#filterBrand')?.value || '',
+      size: $('#categoryQuickSize')?.value || state.variantFilters.size || '',
+      color: $('#categoryQuickColor')?.value || state.variantFilters.color || '',
+      warehouse: $('#categoryQuickWarehouse')?.value || $('#filterWarehouse')?.value || '',
+      image: $('#categoryQuickImage')?.value || $('#filterImage')?.value || ''
+    };
+  }
+
+  function filterQuickSourceByCriteria(source, criteria = {}, excludeKey = '') {
+    const audience = state.categoryAudience || 'all';
+    return (source || []).filter(product => {
+      if (audience !== 'all' && inferAudience(product) !== audience) return false;
+      if (excludeKey !== 'brand' && criteria.brand && norm(val(product,'marca')) !== norm(criteria.brand)) return false;
+      if (excludeKey !== 'size' && criteria.size && norm(val(product,'talla')) !== norm(criteria.size)) return false;
+      if (excludeKey !== 'color' && criteria.color && norm(val(product,'color')) !== norm(criteria.color)) return false;
+      if (excludeKey !== 'warehouse' && criteria.warehouse && norm(val(product,'almacen')) !== norm(criteria.warehouse)) return false;
+      if (excludeKey !== 'image' && criteria.image) {
+        const hasMedia = !!mediaUrl(product);
+        if (criteria.image === 'with' && !hasMedia) return false;
+        if (criteria.image === 'without' && hasMedia) return false;
+      }
+      return true;
     });
+  }
+
+  function buildQuickFilterFacets(source) {
+    const criteria = getQuickFilterSelections();
     const uniqueSorted = (arr) => [...new Map(arr.filter(Boolean).map(v => [norm(v), v])).values()].sort((a,b) => String(a).localeCompare(String(b), 'es'));
-    const counts = (key) => {
+    const counts = (list, key) => {
       const map = new Map();
-      scoped.forEach(p => {
+      list.forEach(p => {
         const value = val(p,key);
         if (!value) return;
         const id = norm(value);
@@ -535,22 +561,30 @@
       });
       return [...map.values()].sort((a,b) => b.count - a.count || String(a.label).localeCompare(String(b.label), 'es'));
     };
+
+    const scopedBrands = filterQuickSourceByCriteria(source, criteria, 'brand');
+    const scopedSizes = filterQuickSourceByCriteria(source, criteria, 'size');
+    const scopedColors = filterQuickSourceByCriteria(source, criteria, 'color');
+    const scopedWarehouses = filterQuickSourceByCriteria(source, criteria, 'warehouse');
+
     return {
-      brands: uniqueSorted(scoped.map(p => val(p,'marca'))),
-      categories: uniqueSorted(scoped.map(p => val(p,'categoria'))),
-      sizes: uniqueSorted(scoped.map(p => val(p,'talla'))),
-      colors: uniqueSorted(scoped.map(p => val(p,'color'))),
-      warehouses: uniqueSorted(scoped.map(p => val(p,'almacen'))),
-      brandCounts: counts('marca').slice(0,6),
-      colorCounts: counts('color').slice(0,8)
+      brands: uniqueSorted(scopedBrands.map(p => val(p,'marca'))),
+      categories: uniqueSorted(filterQuickSourceByCriteria(source, criteria).map(p => val(p,'categoria'))),
+      sizes: uniqueSorted(scopedSizes.map(p => val(p,'talla'))),
+      colors: uniqueSorted(scopedColors.map(p => val(p,'color'))),
+      warehouses: uniqueSorted(scopedWarehouses.map(p => val(p,'almacen'))),
+      brandCounts: counts(scopedBrands, 'marca').slice(0,6),
+      colorCounts: counts(scopedColors, 'color').slice(0,8)
     };
   }
 
   function fillQuickSelect(id, placeholder, values, current = '') {
     const el = $(`#${id}`);
     if (!el) return;
-    el.innerHTML = `<option value="">${esc(placeholder)}</option>` + (values || []).map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
-    el.value = current || '';
+    const options = values || [];
+    el.innerHTML = `<option value="">${esc(placeholder)}</option>` + options.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    const matched = options.find(v => norm(v) === norm(current));
+    el.value = matched || '';
   }
 
   function syncQuickFiltersFromState() {
