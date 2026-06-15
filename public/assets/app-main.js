@@ -50,7 +50,8 @@
     mapping: {},
     sidebarCollapsed: localStorage.getItem('catalogoSidebarCollapsed') === '1',
     uiConfig: loadClientConfig(),
-    requestItems: loadRequestCart()
+    requestItems: loadRequestCart(),
+    adminPanelOpen: false
   };
 
   const fields = [
@@ -136,6 +137,8 @@
       $('#btnGoSheet').classList.add('hidden');
       $('#btnShareViewer').classList.add('hidden');
       document.body.classList.add('viewer-mode');
+      document.body.classList.remove('is-admin','admin-panel-open');
+      state.adminPanelOpen = false;
       hydrateViewerTopbar();
       return;
     }
@@ -147,6 +150,8 @@
     $('#btnGoSheet').classList.toggle('hidden', !admin);
     $('#btnShareViewer').classList.toggle('hidden', !admin);
     document.body.classList.toggle('viewer-mode', logged && !admin);
+    document.body.classList.toggle('is-admin', admin);
+    if (!admin) { state.adminPanelOpen = false; applyAdminPanelState(); }
     hydrateViewerTopbar();
     if (logged && !admin) setView('catalog');
   }
@@ -176,10 +181,12 @@
   }
 
   function bindEvents() {
-    $$('.nav-item').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
-    $('#btnToggleSidebar')?.addEventListener('click', toggleSidebar);
-    applySidebarState();
-    $('#btnGoSheet').addEventListener('click', () => setView('sheet'));
+    $$('.nav-item').forEach(btn => btn.addEventListener('click', () => { setView(btn.dataset.view); }));
+    $('#btnToggleSidebar')?.addEventListener('click', closeAdminPanel);
+    $('#btnOpenAdminPanel')?.addEventListener('click', openAdminPanel);
+    $('#adminPanelScrim')?.addEventListener('click', closeAdminPanel);
+    applyAdminPanelState();
+    $('#btnGoSheet').addEventListener('click', () => { openAdminPanel(); setView('sheet'); });
     $('#btnAuth').addEventListener('click', authAction);
     $('#btnCloseAuth').addEventListener('click', () => $('#authModal').classList.remove('show'));
     $('#btnDoAuth').addEventListener('click', doAuth);
@@ -432,7 +439,7 @@
     if (!src) return `<div class="group-thumb-empty">—</div>`;
     const id = driveId(src);
     const img = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w320` : src;
-    if (/\.mp4($|\?)/i.test(src) && !id) return `<video src="${esc(src)}" muted playsinline></video>`;
+    if (/\.mp4($|\?)/i.test(src) && !id) return `<video src="${esc(src)}" muted loop playsinline></video>`;
     return `<img src="${esc(img)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;group-thumb-empty&quot;>—</div>'">`;
   }
 
@@ -451,9 +458,9 @@
       if (id) {
         const poster = `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1200`;
         const proxy = `${API}/drive-video?id=${encodeURIComponent(id)}`;
-        return `<video src="${esc(proxy)}" poster="${esc(poster)}" controls muted playsinline preload="metadata"></video>`;
+        return `<video src="${esc(proxy)}" poster="${esc(poster)}" controls muted loop playsinline preload="metadata"></video>`;
       }
-      if (/\.mp4($|\?)/i.test(src)) return `<video src="${esc(src)}" controls muted playsinline preload="metadata"></video>`;
+      if (/\.mp4($|\?)/i.test(src)) return `<video src="${esc(src)}" controls muted loop playsinline preload="metadata"></video>`;
     }
     const finalSrc = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1600` : src;
     return `<img src="${esc(finalSrc)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove();">`;
@@ -916,6 +923,8 @@
     try {
       video.muted = true;
       video.autoplay = true;
+      video.loop = true;
+      video.setAttribute('loop', '');
       video.playsInline = true;
       video.currentTime = 0;
       const playPromise = video.play();
@@ -1121,20 +1130,21 @@
     } catch (err) { toast(err.message, 'bad'); }
   }
 
-  function applySidebarState() {
-    document.body.classList.toggle('sidebar-collapsed', !!state.sidebarCollapsed);
-    const btn = $('#btnToggleSidebar');
-    if (btn) {
-      btn.textContent = state.sidebarCollapsed ? '☰' : '‹';
-      btn.setAttribute('aria-label', state.sidebarCollapsed ? 'Expandir menú' : 'Minimizar menú');
-      btn.title = state.sidebarCollapsed ? 'Expandir menú' : 'Minimizar menú';
-    }
+  function applyAdminPanelState() {
+    document.body.classList.toggle('admin-panel-open', !!state.adminPanelOpen);
+    const btn = $('#btnOpenAdminPanel');
+    if (btn) btn.classList.toggle('hidden', state.publicMode);
   }
 
-  function toggleSidebar() {
-    state.sidebarCollapsed = !state.sidebarCollapsed;
-    localStorage.setItem('catalogoSidebarCollapsed', state.sidebarCollapsed ? '1' : '0');
-    applySidebarState();
+  function openAdminPanel() {
+    if (state.publicMode) return;
+    state.adminPanelOpen = true;
+    applyAdminPanelState();
+  }
+
+  function closeAdminPanel() {
+    state.adminPanelOpen = false;
+    applyAdminPanelState();
   }
 
 

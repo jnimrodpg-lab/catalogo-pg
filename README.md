@@ -55,3 +55,8 @@ V17
 - Agrega panel flotante para revisar, quitar, copiar y enviar la solicitud.
 - Limpia la vista viewer con resultados tipo cards compactas y sin campos internos como ubicación/almacén.
 - Mantiene configuración de campos visibles para propietario y comportamiento solo lectura para viewer.
+
+V18
+- El video del visor queda en autoplay y bucle (`loop`) al abrir la card.
+- La vista principal queda como catálogo; el sidebar administrativo se reemplaza por un botón flotante de configuración.
+- La configuración del propietario se abre como panel lateral tipo drawer y no ocupa espacio permanente.

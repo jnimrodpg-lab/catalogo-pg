@@ -11,8 +11,8 @@
 </head>
 <body>
   <div class="client-app" id="appRoot">
-    <aside class="glass-panel sidebar">
-      <button class="sidebar-toggle" id="btnToggleSidebar" type="button" aria-label="Minimizar menú" title="Minimizar menú">☰</button>
+    <aside class="glass-panel sidebar admin-config-panel" id="adminConfigPanel" aria-label="Panel de configuración">
+      <button class="sidebar-toggle" id="btnToggleSidebar" type="button" aria-label="Cerrar configuración" title="Cerrar configuración">×</button>
       <div class="brand-row">
         <div class="brand-mark">C</div>
         <div>
@@ -44,6 +44,9 @@
         <button class="ghost-btn" id="btnAuth" type="button">Ingresar admin</button>
       </div>
     </aside>
+
+    <button class="floating-config-btn" id="btnOpenAdminPanel" type="button" aria-label="Abrir configuración" title="Configuración del propietario">⚙️</button>
+    <div class="admin-panel-scrim" id="adminPanelScrim" aria-hidden="true"></div>
 
     <main class="main-shell">
       <div class="viewer-topbar glass-panel" id="viewerTopbar">
