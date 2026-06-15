@@ -53,7 +53,8 @@
     requestItems: loadRequestCart(),
     adminPanelOpen: false,
     categoryAudience: 'all',
-    categoryAudienceFilter: ''
+    categoryAudienceFilter: '',
+    categoryBrowserProducts: []
   };
 
   const fields = [
@@ -193,8 +194,8 @@
     $('#btnCloseAuth').addEventListener('click', () => $('#authModal').classList.remove('show'));
     $('#btnDoAuth').addEventListener('click', doAuth);
     $$('.auth-tab').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
-    $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.page = 1; await loadSheetConfig(); await loadProducts(); });
-    $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.page = 1; if (state.publicMode) renderLocalPublicProducts(); else await loadProducts(); });
+    $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.categoryBrowserProducts = []; state.page = 1; await loadSheetConfig(); await loadProducts(); });
+    $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.categoryBrowserProducts = []; state.page = 1; if (state.publicMode) renderLocalPublicProducts(); else await loadProducts(); });
     $('#btnReloadProducts').addEventListener('click', () => loadProducts());
     $('#btnSearch').addEventListener('click', () => { state.page = 1; loadProducts(); });
     $('#btnIndividualView')?.addEventListener('click', () => openActiveProductCard());
@@ -292,6 +293,7 @@
       state.branchId = branch.id;
       state.products = data.sheet?.imported_products || [];
       state.summary = { total: state.products.length, with_image: state.products.filter(p => mediaUrl(p)).length, with_stock: state.products.filter(p => val(p,'stock')).length };
+      state.categoryBrowserProducts = state.products.slice();
       renderBranches();
       renderLocalPublicProducts();
       const company = branch.name || 'Catálogo';
@@ -356,9 +358,30 @@
   }
 
   function categorySourceProducts() {
+    if (Array.isArray(state.categoryBrowserProducts) && state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
     if (state.publicMode && Array.isArray(state.products) && state.products.length) return state.products;
     if (Array.isArray(state.currentGroups) && state.currentGroups.length) return state.currentGroups.flatMap(p => p._groupItems || [p]);
     return Array.isArray(state.products) ? state.products.flatMap(p => p._groupItems || [p]) : [];
+  }
+
+  async function hydrateCategoryBrowserProducts(force = false) {
+    if (!force && Array.isArray(state.categoryBrowserProducts) && state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
+    if (state.publicMode) {
+      state.categoryBrowserProducts = Array.isArray(state.products) ? state.products.slice() : [];
+      return state.categoryBrowserProducts;
+    }
+    if (state.branchId && state.auth) {
+      try {
+        const params = new URLSearchParams({ page: '1', limit: '5000', group_by: 'name' });
+        const data = await api(`/branches/${state.branchId}/products?${params}`);
+        state.categoryBrowserProducts = (data.items || []).flatMap(p => p._groupItems || [p]);
+        if (state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
+      } catch (err) {
+        console.warn('No se pudo precargar categorías completas', err);
+      }
+    }
+    state.categoryBrowserProducts = categorySourceProducts().slice();
+    return state.categoryBrowserProducts;
   }
 
   function categoryCardThumb(product, idx = 0) {
@@ -419,8 +442,9 @@
     select.value = value;
   }
 
-  function openCategoryBrowser() {
+  async function openCategoryBrowser() {
     state.categoryAudience = 'all';
+    await hydrateCategoryBrowserProducts(false);
     renderCategoryBrowser();
     $('#categoryBrowser')?.classList.add('open');
     $('#categoryBrowser')?.setAttribute('aria-hidden', 'false');
