@@ -177,8 +177,10 @@
             <button type="button" class="category-audience-chip" data-audience="unisex">Unisex</button>
           </div>
           <div class="category-browser-toolbar" id="categoryBrowserToolbar"></div>
-          <div class="category-browser-grid" id="categoryBrowserGrid"></div>
-          <div class="category-quick-filters">
+          <div class="category-browser-filter-toggle-row">
+            <button class="ghost-btn category-filter-toggle" id="btnToggleCategoryFilters" type="button" aria-expanded="false">Mostrar filtros</button>
+          </div>
+          <div class="category-quick-filters is-collapsed" id="categoryQuickFilters" aria-hidden="true">
             <div class="category-quick-filters-head">
               <h3>Filtros rápidos</h3>
               <p>Refina por marca, talla, color y otras opciones.</p>
@@ -205,6 +207,7 @@
               <button class="scan-btn" id="btnApplyQuickFilters" type="button">Aplicar filtros</button>
             </div>
           </div>
+          <div class="category-browser-grid" id="categoryBrowserGrid"></div>
         </div>
       </section>
       <section class="sheet-view view" id="viewSheet">

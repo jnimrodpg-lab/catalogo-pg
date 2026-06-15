@@ -56,6 +56,7 @@
     categoryAudienceFilter: '',
     categoryBrowserProducts: [],
     categoryBrowserPage: 1,
+    categoryQuickFiltersOpen: false,
     variantFilters: { size:'', color:'' }
   };
 
@@ -233,6 +234,7 @@
     $$('.category-audience-chip').forEach(btn => btn.addEventListener('click', () => { state.categoryAudience = btn.dataset.audience || 'all'; state.categoryBrowserPage = 1; renderCategoryBrowser(); }));
     $('#btnApplyQuickFilters')?.addEventListener('click', applyQuickFiltersFromModal);
     $('#btnResetQuickFilters')?.addEventListener('click', () => { resetQuickFiltersUI(); renderQuickFilterOptions(categorySourceProducts()); });
+    $('#btnToggleCategoryFilters')?.addEventListener('click', toggleCategoryQuickFilters);
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
     $('#activeProductCardClose')?.addEventListener('click', e => { e.stopPropagation(); closeActiveProductCard(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeActiveProductCard(); closeRequestDrawer(); closeCategoryBrowser(); } if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e); });
@@ -400,6 +402,26 @@
     return state.categoryBrowserProducts;
   }
 
+  function updateCategoryQuickFiltersVisibility() {
+    const wrapper = $('#categoryQuickFilters');
+    const btn = $('#btnToggleCategoryFilters');
+    const open = !!state.categoryQuickFiltersOpen;
+    if (wrapper) {
+      wrapper.classList.toggle('is-collapsed', !open);
+      wrapper.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+    if (btn) {
+      btn.classList.toggle('active', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.textContent = open ? 'Ocultar filtros' : 'Mostrar filtros';
+    }
+  }
+
+  function toggleCategoryQuickFilters(force) {
+    state.categoryQuickFiltersOpen = typeof force === 'boolean' ? force : !state.categoryQuickFiltersOpen;
+    updateCategoryQuickFiltersVisibility();
+  }
+
   function categoryCardThumb(product, idx = 0) {
     const src = val(product,'imagen') || val(product,'video');
     if (!src) return `<div class="category-tile-placeholder">${esc((val(product,'categoria') || val(product,'nombre') || 'Categoría').slice(0,1).toUpperCase())}</div>`;
@@ -422,9 +444,10 @@
       const key = norm(category) || 'sin-categoria';
       const hitAudience = inferAudience(product);
       if (audience !== 'all' && hitAudience !== audience) return;
-      if (!map.has(key)) map.set(key, { key, category, audience: hitAudience, items: [], sample: null, idx });
+      if (!map.has(key)) map.set(key, { key, category, audience: hitAudience, items: [], familyKeys: new Set(), sample: null, idx });
       const entry = map.get(key);
       entry.items.push(product);
+      entry.familyKeys.add(productGroupKey(product) || `family-${idx}`);
       if (!entry.sample || mediaUrl(product)) entry.sample = product;
     });
 
@@ -439,6 +462,7 @@
     const pageItems = items.slice(start, start + perPage);
 
     renderQuickFilterOptions(source);
+    updateCategoryQuickFiltersVisibility();
 
     if (toolbar) {
       const rangeStart = items.length ? start + 1 : 0;
@@ -478,7 +502,7 @@
         <div class="category-tile-media">${categoryCardThumb(sample, idx)}</div>
         <div class="category-tile-body">
           <strong>${esc(entry.category)}</strong>
-          <small>${esc(entry.items.length)} producto(s)</small>
+          <small>${esc(String(entry.familyKeys?.size || entry.items.length))} familia(s)</small>
         </div>
       </button>`;
     }).join('');
@@ -694,6 +718,7 @@
   }
 
   function closeCategoryBrowser() {
+    toggleCategoryQuickFilters(false);
     $('#categoryBrowser')?.classList.remove('open');
     $('#categoryBrowser')?.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('category-browser-open');

@@ -1523,3 +1523,7 @@ body{background:radial-gradient(circle at 84% -8%,rgba(66,255,189,.10),transpare
     flex-wrap:wrap!important;
   }
 }
+
+
+/* v29 category browser refinements */
+.category-browser-filter-toggle-row{display:flex;justify-content:flex-end;margin:6px 0 10px}.category-filter-toggle{min-height:46px;padding:0 18px;border-radius:16px;font-weight:900}.category-filter-toggle.active{border-color:rgba(126,231,183,.42);background:rgba(47,119,89,.18);color:#dfffee}.category-quick-filters.is-collapsed{display:none!important}.category-quick-filters{margin:0 0 14px!important;padding:14px 0 0!important;border-top:1px solid rgba(255,255,255,.08)!important}.category-browser-toolbar{margin:6px 0 0!important}.category-browser-grid{margin-bottom:0!important}.category-browser-grid .category-tile{min-height:176px}.category-browser-grid .category-tile-media,.category-browser-grid .category-tile.tile-tall .category-tile-media,.category-browser-grid .category-tile.tile-medium .category-tile-media,.category-browser-grid .category-tile.tile-wide .category-tile-media{height:176px!important;min-height:176px!important}.category-browser-grid .category-tile-body small{font-weight:700!important}.category-browser-panel{overflow:hidden!important}.category-browser-panel .category-browser-grid,.category-browser-panel .category-quick-filters{overflow:visible!important}.category-browser-head + .category-audience-row{margin-bottom:8px!important}@media (max-width: 980px){.category-browser-filter-toggle-row{justify-content:stretch}.category-filter-toggle{width:100%}}
