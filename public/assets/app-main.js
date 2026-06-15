@@ -51,7 +51,9 @@
     sidebarCollapsed: localStorage.getItem('catalogoSidebarCollapsed') === '1',
     uiConfig: loadClientConfig(),
     requestItems: loadRequestCart(),
-    adminPanelOpen: false
+    adminPanelOpen: false,
+    categoryAudience: 'all',
+    categoryAudienceFilter: ''
   };
 
   const fields = [
@@ -198,7 +200,7 @@
     $('#btnIndividualView')?.addEventListener('click', () => openActiveProductCard());
     $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') { state.page = 1; loadProducts(); } });
     ['filterBrand','filterCategory','filterWarehouse','filterImage'].forEach(id => $(`#${id}`).addEventListener('change', () => { state.page = 1; loadProducts(); }));
-    $('#btnClearFilters').addEventListener('click', () => { ['searchInput','filterBrand','filterCategory','filterWarehouse','filterImage'].forEach(id => $(`#${id}`).value = ''); state.page = 1; loadProducts(); });
+    $('#btnClearFilters').addEventListener('click', () => { ['searchInput','filterBrand','filterCategory','filterWarehouse','filterImage'].forEach(id => $(`#${id}`).value = ''); state.categoryAudienceFilter = ''; state.page = 1; loadProducts(); });
     $('#btnPrevPage').addEventListener('click', () => { if (state.page > 1) { state.page--; loadProducts(); } });
     $('#btnNextPage').addEventListener('click', () => { if (state.page < state.totalPages) { state.page++; loadProducts(); } });
     $('#btnProbeSheet').addEventListener('click', probeSheet);
@@ -220,9 +222,13 @@
     $('#btnSendRequest')?.addEventListener('click', sendRequestCart);
     bindClientConfigControls();
     $('#btnScanFake')?.addEventListener('click', () => toast('Puedes pegar o escanear el código con un lector físico en la barra de búsqueda.'));
+    $('#btnOpenCategoryBrowser')?.addEventListener('click', openCategoryBrowser);
+    $('#btnCloseCategoryBrowser')?.addEventListener('click', closeCategoryBrowser);
+    $('#categoryBrowser')?.addEventListener('click', e => { if (e.target?.id === 'categoryBrowser') closeCategoryBrowser(); });
+    $$('.category-audience-chip').forEach(btn => btn.addEventListener('click', () => { state.categoryAudience = btn.dataset.audience || 'all'; renderCategoryBrowser(); }));
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
     $('#activeProductCardClose')?.addEventListener('click', e => { e.stopPropagation(); closeActiveProductCard(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeActiveProductCard(); closeRequestDrawer(); } if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeActiveProductCard(); closeRequestDrawer(); closeCategoryBrowser(); } if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e); });
     renderRequestCart();
   }
 
@@ -332,6 +338,111 @@
     }
   }
 
+
+  function inferAudience(product) {
+    const hay = norm([val(product,'genero'), val(product,'categoria'), val(product,'nombre'), val(product,'variante')].filter(Boolean).join(' '));
+    if (!hay) return 'all';
+    if (/(nina|niña|girl|junior mujer)/.test(hay)) return 'nina';
+    if (/(nino|niño|boy|junior varon)/.test(hay)) return 'nino';
+    if (/(mujer|dama|femen|lady|women|ropa interior mujer)/.test(hay)) return 'mujer';
+    if (/(varon|varón|hombre|caballero|mascul|men)/.test(hay)) return 'varon';
+    if (/(bebe|bebé|baby|infant)/.test(hay)) return 'bebe';
+    if (/(unisex)/.test(hay)) return 'unisex';
+    return 'all';
+  }
+
+  function audienceLabel(key) {
+    return ({ all:'Todo', mujer:'Mujer', varon:'Varón', nino:'Niño', nina:'Niña', bebe:'Bebé', unisex:'Unisex' })[key] || 'Todo';
+  }
+
+  function categorySourceProducts() {
+    if (state.publicMode && Array.isArray(state.products) && state.products.length) return state.products;
+    if (Array.isArray(state.currentGroups) && state.currentGroups.length) return state.currentGroups.flatMap(p => p._groupItems || [p]);
+    return Array.isArray(state.products) ? state.products.flatMap(p => p._groupItems || [p]) : [];
+  }
+
+  function categoryCardThumb(product, idx = 0) {
+    const src = val(product,'imagen') || val(product,'video');
+    if (!src) return `<div class="category-tile-placeholder">${esc((val(product,'categoria') || val(product,'nombre') || 'Categoría').slice(0,1).toUpperCase())}</div>`;
+    const id = driveId(src);
+    const img = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w800` : src;
+    return `<img src="${esc(img)}" alt="${esc(val(product,'categoria') || 'Categoría')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;category-tile-placeholder&quot;>${esc((val(product,'categoria') || 'C').slice(0,1).toUpperCase())}</div>'">`;
+  }
+
+  function renderCategoryBrowser() {
+    const modal = $('#categoryBrowser');
+    const grid = $('#categoryBrowserGrid');
+    if (!modal || !grid) return;
+    const audience = state.categoryAudience || 'all';
+    $$('.category-audience-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.audience === audience));
+    const source = categorySourceProducts();
+    const map = new Map();
+    source.forEach((product, idx) => {
+      const category = val(product,'categoria') || 'Sin categoría';
+      const key = norm(category) || 'sin-categoria';
+      const hitAudience = inferAudience(product);
+      if (audience !== 'all' && hitAudience !== audience) return;
+      if (!map.has(key)) map.set(key, { key, category, audience: hitAudience, items: [], sample: null, idx });
+      const entry = map.get(key);
+      entry.items.push(product);
+      if (!entry.sample || mediaUrl(product)) entry.sample = product;
+    });
+    const items = [...map.values()].sort((a,b) => String(a.category).localeCompare(String(b.category), 'es'));
+    if (!items.length) {
+      grid.innerHTML = `<div class="category-browser-empty">No encontramos categorías para ${esc(audienceLabel(audience).toLowerCase())}. Prueba con otro filtro.</div>`;
+      return;
+    }
+    grid.innerHTML = items.map((entry, idx) => {
+      const sample = entry.sample || entry.items[0] || {};
+      const sizeClass = ['tile-tall','tile-medium','tile-medium','tile-wide'][idx % 4];
+      return `<button type="button" class="category-tile ${sizeClass}" data-category="${esc(entry.category)}" data-audience="${esc(audience)}">
+        <div class="category-tile-media">${categoryCardThumb(sample, idx)}</div>
+        <div class="category-tile-body">
+          <span class="category-tile-tag">${esc(audienceLabel(audience === 'all' ? inferAudience(sample) : audience))}</span>
+          <strong>${esc(entry.category)}</strong>
+          <small>${esc(entry.items.length)} producto(s)</small>
+        </div>
+      </button>`;
+    }).join('');
+    $$('.category-tile', grid).forEach(btn => btn.addEventListener('click', () => applyCategorySelection(btn.dataset.category || '', btn.dataset.audience || 'all')));
+  }
+
+  function ensureSelectOption(selectId, value, label = value) {
+    const select = $(`#${selectId}`);
+    if (!select) return;
+    if (![...select.options].some(opt => opt.value === value)) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+      select.appendChild(opt);
+    }
+    select.value = value;
+  }
+
+  function openCategoryBrowser() {
+    state.categoryAudience = state.categoryAudience || 'all';
+    renderCategoryBrowser();
+    $('#categoryBrowser')?.classList.add('open');
+    $('#categoryBrowser')?.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('category-browser-open');
+  }
+
+  function closeCategoryBrowser() {
+    $('#categoryBrowser')?.classList.remove('open');
+    $('#categoryBrowser')?.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('category-browser-open');
+  }
+
+  function applyCategorySelection(category, audience = 'all') {
+    state.categoryAudienceFilter = audience && audience !== 'all' ? audience : '';
+    ensureSelectOption('filterCategory', category, category);
+    state.page = 1;
+    closeCategoryBrowser();
+    if (state.publicMode) renderLocalPublicProducts();
+    else loadProducts();
+    toast(`Mostrando categoría: ${category}`);
+  }
+
   async function loadProducts() {
     if (state.publicMode) return renderLocalPublicProducts();
     if (!state.branchId || !state.auth) return;
@@ -362,6 +473,7 @@
     const category = norm($('#filterCategory')?.value || '');
     const warehouse = norm($('#filterWarehouse')?.value || '');
     const imageState = $('#filterImage')?.value || '';
+    const audienceFilter = norm(state.categoryAudienceFilter || '');
     let filtered = state.products.filter(p => {
       const hay = norm(Object.values(p || {}).join(' '));
       if (terms.length && !terms.every(t => hay.includes(t))) return false;
@@ -370,6 +482,7 @@
       if (warehouse && norm(val(p,'almacen')) !== warehouse) return false;
       if (imageState === 'with' && !mediaUrl(p)) return false;
       if (imageState === 'without' && mediaUrl(p)) return false;
+      if (audienceFilter && inferAudience(p) !== audienceFilter) return false;
       return true;
     });
     const groups = groupProductsByName(filtered);

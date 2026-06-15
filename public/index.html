@@ -71,23 +71,21 @@
       </header>
 
       <section class="catalog-view view active" id="viewCatalog">
-        <div class="client-search-shell glass-panel model-one-search">
-          <div class="search-client-head">
-            <div>
-              <strong>Busca tu producto</strong>
-              <span>Escribe nombre, SKU, talla, color o ubicación. Los productos similares se agrupan automáticamente.</span>
-            </div>
+        <div class="client-search-shell glass-panel model-one-search simplified-search-shell">
+          <div class="search-client-head simplified">
+            <strong>Busca tu producto</strong>
             <div class="search-client-actions">
-              <span class="count-pill"><b id="statTotalTop">0</b> productos</span>
+              <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
               <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
             </div>
           </div>
-          <div class="search-client-row">
+          <div class="search-client-row simplified-search-row">
             <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
-            <button class="icon-search-btn" id="btnSearch" type="button">⌕</button>
+            <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
             <button class="scan-btn" id="btnScanFake" type="button">Escanear código</button>
+            <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Buscar por categoría</button>
           </div>
-          <div class="filter-row compact-filters">
+          <div class="filter-row compact-filters hidden" aria-hidden="true">
             <select id="filterBrand"><option value="">Todas las marcas</option></select>
             <select id="filterCategory"><option value="">Todas las categorías</option></select>
             <select id="filterWarehouse"><option value="">Todos los almacenes</option></select>
@@ -150,6 +148,28 @@
       </section>
 
       <div class="search-card-overlay" id="searchCardOverlay" aria-hidden="true"></div>
+      <section class="category-browser-backdrop" id="categoryBrowser" aria-hidden="true">
+        <div class="glass-panel category-browser-panel">
+          <div class="category-browser-head">
+            <div>
+              <div class="eyebrow">Búsqueda por categoría</div>
+              <h2>Explora por categoría</h2>
+              <p>Primero elige a quién va dirigido y luego selecciona la categoría que quieres ver.</p>
+            </div>
+            <button class="search-card-expand-close category-browser-close" id="btnCloseCategoryBrowser" type="button" aria-label="Cerrar búsqueda por categoría">×</button>
+          </div>
+          <div class="category-audience-row" id="categoryAudienceFilters">
+            <button type="button" class="category-audience-chip active" data-audience="all">Todo</button>
+            <button type="button" class="category-audience-chip" data-audience="mujer">Mujer</button>
+            <button type="button" class="category-audience-chip" data-audience="varon">Varón</button>
+            <button type="button" class="category-audience-chip" data-audience="nino">Niño</button>
+            <button type="button" class="category-audience-chip" data-audience="nina">Niña</button>
+            <button type="button" class="category-audience-chip" data-audience="bebe">Bebé</button>
+            <button type="button" class="category-audience-chip" data-audience="unisex">Unisex</button>
+          </div>
+          <div class="category-browser-grid" id="categoryBrowserGrid"></div>
+        </div>
+      </section>
       <section class="sheet-view view" id="viewSheet">
         <div class="glass-panel setup-panel">
           <div class="section-head">
