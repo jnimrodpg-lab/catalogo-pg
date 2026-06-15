@@ -25,3 +25,9 @@ V6
 V7
 - Corrige de forma forzada la jerarquía del visor: la card principal se monta temporalmente en el body y usa z-index superior al overlay y a las cards Anterior/Siguiente.
 - Verificado con `node --check` en `public/assets/app-main.js`.
+
+V10
+- Ajusta proporción del visor usando como referencia el ZIP v14 proporcionado.
+- Imagen/video ocupa todo el alto del área izquierda del card.
+- Panel de información queda compacto y sin scroll interno en escritorio.
+- Mejora contraste y lectura de chips de color.
