@@ -32,6 +32,5 @@ V10
 - Panel de información queda compacto y sin scroll interno en escritorio.
 - Mejora contraste y lectura de chips de color.
 
-
-V12
-- Ajusta el visor para acercarlo al diseño de referencia: card 16:9, media full-bleed y panel derecho glass overlay interno.
+V13
+- Mantiene el card 16:9 del visor, pero cambia imagen/video a object-fit: contain para que el producto se vea completo sin recortes.

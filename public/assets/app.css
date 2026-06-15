@@ -957,3 +957,14 @@ body.search-card-modal-open #activeProductCard.search-card-expanded .product-pho
     margin-top:12px!important;
   }
 }
+
+/* v13 · mostrar imagen/video completo dentro del card, sin recortes */
+body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo{
+  background:#020712!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo img,
+body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo video{
+  object-fit:contain!important;
+  object-position:center center!important;
+  background:#020712!important;
+}
