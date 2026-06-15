@@ -55,6 +55,7 @@
     categoryAudience: 'all',
     categoryAudienceFilter: '',
     categoryBrowserProducts: [],
+    categoryBrowserPage: 1,
     variantFilters: { size:'', color:'' }
   };
 
@@ -229,7 +230,7 @@
     $('#btnOpenCategoryBrowser')?.addEventListener('click', openCategoryBrowser);
     $('#btnCloseCategoryBrowser')?.addEventListener('click', closeCategoryBrowser);
     $('#categoryBrowser')?.addEventListener('click', e => { if (e.target?.id === 'categoryBrowser') closeCategoryBrowser(); });
-    $$('.category-audience-chip').forEach(btn => btn.addEventListener('click', () => { state.categoryAudience = btn.dataset.audience || 'all'; renderCategoryBrowser(); }));
+    $$('.category-audience-chip').forEach(btn => btn.addEventListener('click', () => { state.categoryAudience = btn.dataset.audience || 'all'; state.categoryBrowserPage = 1; renderCategoryBrowser(); }));
     $('#btnApplyQuickFilters')?.addEventListener('click', applyQuickFiltersFromModal);
     $('#btnResetQuickFilters')?.addEventListener('click', () => { resetQuickFiltersUI(); renderQuickFilterOptions(categorySourceProducts()); });
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
@@ -401,6 +402,7 @@
   function renderCategoryBrowser() {
     const modal = $('#categoryBrowser');
     const grid = $('#categoryBrowserGrid');
+    const toolbar = $('#categoryBrowserToolbar');
     if (!modal || !grid) return;
     const audience = state.categoryAudience || 'all';
     $$('.category-audience-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.audience === audience));
@@ -416,19 +418,56 @@
       entry.items.push(product);
       if (!entry.sample || mediaUrl(product)) entry.sample = product;
     });
-    const items = [...map.values()].sort((a,b) => String(a.category).localeCompare(String(b.category), 'es'));
+
+    const allItems = [...map.values()].sort((a,b) => String(a.category).localeCompare(String(b.category), 'es'));
+    const visualItems = allItems.filter(entry => mediaUrl(entry.sample || entry.items[0] || {}));
+    const items = visualItems.length ? visualItems : allItems;
+    const perPage = 8;
+    const totalPages = Math.max(1, Math.ceil(items.length / perPage));
+    state.categoryBrowserPage = Math.min(Math.max(state.categoryBrowserPage || 1, 1), totalPages);
+    const currentPage = state.categoryBrowserPage;
+    const start = (currentPage - 1) * perPage;
+    const pageItems = items.slice(start, start + perPage);
+
     renderQuickFilterOptions(source);
+
+    if (toolbar) {
+      const rangeStart = items.length ? start + 1 : 0;
+      const rangeEnd = Math.min(start + perPage, items.length);
+      toolbar.innerHTML = `
+        <div class="category-browser-toolbar-copy">
+          <strong>Categorías visuales</strong>
+          <span>Mostrando ${esc(String(rangeStart))}-${esc(String(rangeEnd))} de ${esc(String(items.length))} categorías${visualItems.length && visualItems.length !== allItems.length ? ' con imagen' : ''}.</span>
+        </div>
+        <div class="category-browser-pager" aria-label="Navegación de categorías">
+          <button type="button" class="category-page-btn" id="categoryPagePrev" ${currentPage <= 1 ? 'disabled' : ''} aria-label="Página anterior">‹</button>
+          <span class="category-page-indicator">${esc(String(currentPage))} / ${esc(String(totalPages))}</span>
+          <button type="button" class="category-page-btn" id="categoryPageNext" ${currentPage >= totalPages ? 'disabled' : ''} aria-label="Página siguiente">›</button>
+        </div>`;
+      $('#categoryPagePrev', toolbar)?.addEventListener('click', () => {
+        if (state.categoryBrowserPage > 1) {
+          state.categoryBrowserPage -= 1;
+          renderCategoryBrowser();
+        }
+      });
+      $('#categoryPageNext', toolbar)?.addEventListener('click', () => {
+        if (state.categoryBrowserPage < totalPages) {
+          state.categoryBrowserPage += 1;
+          renderCategoryBrowser();
+        }
+      });
+    }
+
     if (!items.length) {
       grid.innerHTML = `<div class="category-browser-empty">No encontramos categorías para ${esc(audienceLabel(audience).toLowerCase())}. Prueba con otro filtro.</div>`;
       return;
     }
-    grid.innerHTML = items.map((entry, idx) => {
+
+    grid.innerHTML = pageItems.map((entry, idx) => {
       const sample = entry.sample || entry.items[0] || {};
-      const sizeClass = ['tile-tall','tile-medium','tile-medium','tile-wide'][idx % 4];
-      return `<button type="button" class="category-tile ${sizeClass}" data-category="${esc(entry.category)}" data-audience="${esc(audience)}">
+      return `<button type="button" class="category-tile" data-category="${esc(entry.category)}" data-audience="${esc(audience)}">
         <div class="category-tile-media">${categoryCardThumb(sample, idx)}</div>
         <div class="category-tile-body">
-          <span class="category-tile-tag">${esc(audienceLabel(audience === 'all' ? inferAudience(sample) : audience))}</span>
           <strong>${esc(entry.category)}</strong>
           <small>${esc(entry.items.length)} producto(s)</small>
         </div>
@@ -637,6 +676,7 @@
 
   async function openCategoryBrowser() {
     state.categoryAudience = 'all';
+    state.categoryBrowserPage = 1;
     state.categoryBrowserProducts = [];
     await hydrateCategoryBrowserProducts(true);
     syncQuickFiltersFromState();
