@@ -60,7 +60,7 @@
     categoryCache: {},
     categoryHydrating: false,
     categoryQuickFiltersOpen: false,
-    mainFiltersOpen: true,
+    mainFiltersOpen: false,
     loginAccessMode: 'admin',
     variantFilters: { size:'', color:'' }
   };
@@ -1816,6 +1816,6 @@
   setLoginAccessMode('admin');
   setAuthMode('login');
   document.body.classList.add('catalog-fit-mode');
-  setMainFiltersOpen(true);
+  setMainFiltersOpen(state.mainFiltersOpen);
   init();
 })();
