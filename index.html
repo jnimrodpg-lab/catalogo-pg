@@ -45,7 +45,6 @@
       </div>
     </aside>
 
-    <button class="floating-config-btn" id="btnOpenAdminPanel" type="button" aria-label="Abrir configuración" title="Configuración del propietario">⚙️</button>
     <div class="admin-panel-scrim" id="adminPanelScrim" aria-hidden="true"></div>
 
     <main class="main-shell">
@@ -71,30 +70,16 @@
       </header>
 
       <section class="catalog-view view active" id="viewCatalog">
-        <div class="client-search-shell glass-panel model-one-search simplified-search-shell">
-          <div class="search-client-head simplified showroom-brandbar">
-            <div class="showroom-brand-mini"><span class="brand-emblem">◇</span><strong>Premium Commerce</strong></div>
-            <div class="search-client-actions">
-              <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
-              <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
-            </div>
-          </div>
-          <div class="search-client-row simplified-search-row">
-            <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
-            <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
-            <button class="scan-btn filter-main-btn" id="btnToggleMainFilters" type="button" aria-expanded="false">Filtros</button>
-            <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Explorar categorías</button>
-          </div>
-        </div>
-
         <div class="product-client-stage glass-panel model-one-board">
           <aside class="showroom-filter-sidebar">
-            <div class="showroom-filter-rail" aria-hidden="true">
-              <div class="rail-item active"><span>⎇</span><small>Filtros</small></div>
-              <div class="rail-item"><span>◫</span><small>Categorías</small></div>
-              <div class="rail-item"><span>♡</span><small>Marcas</small></div>
-              <div class="rail-item"><span>◌</span><small>Colores</small></div>
-              <div class="rail-item"><span>$</span><small>Precio</small></div>
+            <div class="showroom-filter-rail" aria-label="Accesos de filtros">
+              <button class="rail-item active" type="button" data-rail-action="filters"><span>⎇</span><small>Filtros</small></button>
+              <button class="rail-item" type="button" data-rail-action="categories"><span>◫</span><small>Categorías</small></button>
+              <button class="rail-item" type="button" data-rail-action="brands"><span>♡</span><small>Marcas</small></button>
+              <button class="rail-item" type="button" data-rail-action="sizes"><span>△</span><small>Tallas</small></button>
+              <button class="rail-item" type="button" data-rail-action="colors"><span>◌</span><small>Colores</small></button>
+              <button class="rail-item danger" type="button" data-rail-action="clear"><span>⌫</span><small>Limpiar</small></button>
+              <button class="rail-item rail-settings-btn" id="btnOpenAdminPanel" type="button" aria-label="Abrir configuración" title="Configuración del propietario"><span>⚙</span><small>Ajustes</small></button>
             </div>
             <div class="showroom-filter-card" id="mainFilterPanel" aria-hidden="false">
               <div class="showroom-filter-title">
@@ -112,28 +97,46 @@
               <select id="filterImage" class="hidden"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
             </div>
           </aside>
-          <div class="groups-panel">
-            <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
-              <div class="applied-filters-head">
-                <span>Filtros aplicados</span>
-                <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
+
+          <div class="showroom-main-column">
+            <div class="client-search-shell glass-panel model-one-search simplified-search-shell compact-inside-stage">
+              <div class="search-client-head simplified showroom-brandbar">
+                <div class="showroom-brand-mini"><span class="brand-emblem">◇</span><strong>Premium Commerce</strong></div>
+                <div class="search-client-actions">
+                  <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
+                  <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
+                </div>
               </div>
-              <div class="applied-filters-list" id="appliedFiltersList">
-                <span class="applied-filter-empty">Sin filtros activos</span>
+              <div class="search-client-row simplified-search-row v40-inline-search">
+                <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
+                <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
+                <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Explorar categorías</button>
               </div>
             </div>
-            <div class="result-summary-row model-one-summary">
-              <span id="resultSummary">Mostrando 0 productos</span>
-              <span id="pageSummary">Página 1</span>
-            </div>
-            <div class="product-table-wrap model-one-list">
-              <div class="product-head"><div>Producto</div><div>Variantes</div><div>Colores</div><div>Tallas</div></div>
-              <div class="product-list" id="productGrid"></div>
-            </div>
-            <div class="pagination inline-pagination">
-              <button class="ghost-btn" id="btnPrevPage" type="button">←</button>
-              <span id="paginationText">Página 1</span>
-              <button class="ghost-btn" id="btnNextPage" type="button">→</button>
+
+            <div class="groups-panel">
+              <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
+                <div class="applied-filters-head">
+                  <span>Filtros aplicados</span>
+                  <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
+                </div>
+                <div class="applied-filters-list" id="appliedFiltersList">
+                  <span class="applied-filter-empty">Sin filtros activos</span>
+                </div>
+              </div>
+              <div class="result-summary-row model-one-summary">
+                <span id="resultSummary">Mostrando 0 productos</span>
+                <span id="pageSummary">Página 1</span>
+              </div>
+              <div class="product-table-wrap model-one-list">
+                <div class="product-head"><div>Producto</div><div>Variantes</div><div>Colores</div><div>Tallas</div></div>
+                <div class="product-list" id="productGrid"></div>
+              </div>
+              <div class="pagination inline-pagination">
+                <button class="ghost-btn" id="btnPrevPage" type="button">←</button>
+                <span id="paginationText">Página 1</span>
+                <button class="ghost-btn" id="btnNextPage" type="button">→</button>
+              </div>
             </div>
           </div>
 
