@@ -58,7 +58,7 @@
     categoryBrowserProducts: [],
     categoryBrowserPage: 1,
     categoryQuickFiltersOpen: false,
-    mainFiltersOpen: false,
+    mainFiltersOpen: true,
     loginAccessMode: 'admin',
     variantFilters: { size:'', color:'' }
   };
@@ -236,8 +236,8 @@
     $('#btnSendRequest')?.addEventListener('click', sendRequestCart);
     bindClientConfigControls();
     $('#btnToggleMainFilters')?.addEventListener('click', () => setMainFiltersOpen(!state.mainFiltersOpen));
-    $('#btnApplySidebarFilters')?.addEventListener('click', () => { state.page = 1; loadProducts(); });
-    $('#sortSelect')?.addEventListener('change', () => { state.page = 1; loadProducts(); });
+    $('#btnCloseSidebarFilters')?.addEventListener('click', () => setMainFiltersOpen(false));
+    $('#btnSidebarResult')?.addEventListener('click', () => { state.page = 1; loadProducts(); });
     $('#btnOpenCategoryBrowser')?.addEventListener('click', openCategoryBrowser);
     $('#btnCloseCategoryBrowser')?.addEventListener('click', closeCategoryBrowser);
     $('#categoryBrowser')?.addEventListener('click', e => { if (e.target?.id === 'categoryBrowser') closeCategoryBrowser(); });
@@ -1035,68 +1035,43 @@
     }).sort((a,b)=>String(a._groupName).localeCompare(String(b._groupName),'es'));
   }
 
-  function sortGroups(products) {
-    const mode = $('#sortSelect')?.value || 'relevant';
-    const arr = [...(products || [])];
-    if (mode === 'name-asc') arr.sort((a,b) => String(a._groupName || val(a,'nombre') || '').localeCompare(String(b._groupName || val(b,'nombre') || ''), 'es'));
-    else if (mode === 'name-desc') arr.sort((a,b) => String(b._groupName || val(b,'nombre') || '').localeCompare(String(a._groupName || val(a,'nombre') || ''), 'es'));
-    else if (mode === 'brand') arr.sort((a,b) => String(val(a,'marca') || '').localeCompare(String(val(b,'marca') || ''), 'es') || String(a._groupName || val(a,'nombre') || '').localeCompare(String(b._groupName || val(b,'nombre') || ''), 'es'));
-    return arr;
-  }
-
   function renderProducts(products) {
     const list = $('#productGrid');
-    const sortedProducts = sortGroups(products || []);
-    state.currentResults = sortedProducts;
-    state.currentGroups = sortedProducts;
-    if (!sortedProducts.length) {
+    state.currentResults = products || [];
+    state.currentGroups = products || [];
+    if (!products.length) {
       renderEmptyState('No hay productos para mostrar. Revisa la búsqueda o importa tu Sheet.');
       selectProduct(null);
       return;
     }
-    list.innerHTML = sortedProducts.map((p, idx) => {
+    list.innerHTML = products.map((p, idx) => {
       const variants = Number(p._variantCount || p._groupItems?.length || 1);
       const sizes = p._sizeOptions?.length ? p._sizeOptions : uniqueValues(p._groupItems || [p], 'talla');
       const colors = p._colorOptions?.length ? p._colorOptions : uniqueValues(p._groupItems || [p], 'color');
+      const locs = p._locationOptions?.length ? p._locationOptions : uniqueValues(p._groupItems || [p], 'ubicacion');
+      const whs = p._warehouseOptions?.length ? p._warehouseOptions : uniqueValues(p._groupItems || [p], 'almacen');
       const skuLabel = (p._skuOptions?.[0] || val(p,'sku') || val(p,'barras') || '—');
       const title = p._groupName || val(p,'nombre') || 'Sin nombre';
       const subtitle = [val(p,'marca'), val(p,'categoria')].filter(Boolean).join(' · ');
-      const toneA = val(p,'linea') || val(p,'grosor') || '';
-      const toneB = variants > 1 ? `${variants} variantes` : (val(p,'variante') || '1 variante');
-      const sizeChips = sizes.slice(0,5).map(size => `<span class="showroom-mini-chip ${norm(size)===norm(val(p,'talla'))?'active':''}">${esc(size)}</span>`).join('');
-      const colorChips = colors.slice(0,4).map(color => `<span class="showroom-color-dot" title="${esc(color)}" style="${chipStyle(color)}"></span>`).join('') + (colors.length > 4 ? `<span class="showroom-color-more">+${colors.length - 4}</span>` : '');
       return `
-      <article class="product-row showroom-product-card" data-index="${idx}" tabindex="0" title="Seleccionar producto agrupado">
-        <div class="showroom-card-media">${renderThumb(p)}</div>
-        <div class="showroom-card-body">
-          <div class="showroom-card-head">
-            <div>
-              <h3>${esc(title)}</h3>
-              <p>${esc(subtitle || `SKU ${skuLabel}`)}</p>
-            </div>
-            <button class="showroom-fav-btn" type="button" tabindex="-1" aria-label="Favorito">♡</button>
-          </div>
-          <div class="showroom-card-tags">
-            ${toneA ? `<span>${esc(toneA)}</span>` : ''}
-            ${toneB ? `<span>${esc(toneB)}</span>` : ''}
-          </div>
-          <div class="showroom-card-meta-row">
-            <span class="showroom-card-count">${esc(`${sizes.length || '—'} tallas · ${colors.length || '—'} colores`)}</span>
-          </div>
-          <div class="showroom-card-variants">
-            <div class="showroom-mini-strip">${sizeChips || '<span class="showroom-mini-chip">—</span>'}</div>
-            <div class="showroom-mini-colors">${colorChips || '<span class="showroom-color-more">—</span>'}</div>
+      <div class="product-row product-family-row model-one-row" data-index="${idx}" tabindex="0" title="Seleccionar producto agrupado">
+        <div class="group-product-cell">
+          <div class="group-thumb">${renderThumb(p)}</div>
+          <div class="group-info">
+            <strong>${esc(title)}</strong>
+            <small>${esc(subtitle || `SKU ${skuLabel}`)}</small>
+            <span class="group-location-mini">${esc(`${sizes.length || '—'} tallas · ${colors.length || '—'} colores`)}</span>
+            <em class="group-open-label">Ver producto →</em>
           </div>
         </div>
-        <div class="showroom-card-side">
-          <div class="showroom-card-variant-box"><b>${esc(variants)}</b><small>variantes</small></div>
-          <span class="showroom-card-arrow">›</span>
-        </div>
-      </article>`;
+        <div><span class="metric-pill">${esc(variants)}</span><small>${esc(variants === 1 ? (val(p,'variante') || '1 variante') : 'variantes')}</small></div>
+        <div><span class="metric-pill">${esc(colors.length || '—')}</span><small>${esc(colors.slice(0,3).join(' · ') || 'colores')}</small></div>
+        <div><span class="metric-pill">${esc(sizes.length || '—')}</span><small>${esc(sizes.slice(0,4).join(' · ') || 'tallas')}</small></div>
+      </div>`;
     }).join('');
     $$('.product-row', list).forEach(row => {
       const pick = () => {
-        const group = sortedProducts[Number(row.dataset.index)];
+        const group = products[Number(row.dataset.index)];
         const item = group?._groupItems?.find(p => mediaUrl(p)) || group?._groupItems?.[0] || group;
         if (group?._groupItems && !item._groupItems) item._groupItems = group._groupItems;
         if (group?._groupKey && !item._groupKey) item._groupKey = group._groupKey;
@@ -1105,8 +1080,8 @@
       row.addEventListener('click', pick);
       row.addEventListener('keydown', e => { if (e.key === 'Enter') pick(); });
     });
-    const keep = state.selected && sortedProducts.find(p => productGroupKey(p) === productGroupKey(state.selected));
-    const first = keep || sortedProducts[0];
+    const keep = state.selected && products.find(p => productGroupKey(p) === productGroupKey(state.selected));
+    const first = keep || products[0];
     const selected = first?._groupItems?.find(p => mediaUrl(p)) || first?._groupItems?.[0] || first;
     if (first?._groupItems && selected && !selected._groupItems) selected._groupItems = first._groupItems;
     if (first?._groupKey && selected && !selected._groupKey) selected._groupKey = first._groupKey;
