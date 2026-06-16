@@ -74,8 +74,7 @@
           <aside class="showroom-filter-sidebar">
             <div class="showroom-filter-rail" aria-label="Accesos de filtros">
               <button class="rail-item active" type="button" data-rail-action="filters"><span>⎇</span><small>Filtros</small></button>
-              <button class="rail-item" type="button" data-rail-action="categories"><span>◫</span><small>Categorías</small></button>
-              <button class="rail-item" type="button" data-rail-action="brands"><span>♡</span><small>Marcas</small></button>
+                            <button class="rail-item" type="button" data-rail-action="brands"><span>♡</span><small>Marcas</small></button>
               <button class="rail-item" type="button" data-rail-action="sizes"><span>△</span><small>Tallas</small></button>
               <button class="rail-item" type="button" data-rail-action="colors"><span>◌</span><small>Colores</small></button>
               <button class="rail-item danger" type="button" data-rail-action="clear"><span>⌫</span><small>Limpiar</small></button>
@@ -83,11 +82,11 @@
             </div>
             <div class="showroom-filter-card" id="mainFilterPanel" aria-hidden="false">
               <div class="showroom-filter-title">
-                <div><strong>Filtros</strong><span>Refina marca, categoría, talla y color.</span></div>
+                <div><strong>Filtros</strong><span>Refina marca, talla y color.</span></div>
                 <button class="showroom-filter-x" id="btnCloseSidebarFilters" type="button" aria-expanded="true">×</button>
               </div>
               <label><span>Marca</span><select id="filterBrand"><option value="">Todas las marcas</option></select></label>
-              <label><span>Categoría</span><select id="filterCategory"><option value="">Todas las categorías</option></select></label>
+              <label class="hidden"><span>Categoría</span><select id="filterCategory"><option value="">Todas las categorías</option></select></label>
               <label><span>Talla</span><select id="filterSize"><option value="">Todas las tallas</option></select></label>
               <label><span>Color</span><select id="filterColor"><option value="">Todos los colores</option></select></label>
               <button class="scan-btn filter-result-btn" type="button" id="btnSidebarResult">Ver resultados</button>
@@ -110,35 +109,35 @@
               <div class="search-client-row simplified-search-row v40-inline-search">
                 <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
                 <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
-                <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Explorar categorías</button>
+                <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Buscar por categoría</button>
               </div>
             </div>
 
             <div class="groups-panel">
-              <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
-                <div class="applied-filters-head">
-                  <span>Filtros aplicados</span>
-                  <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
-                </div>
-                <div class="applied-filters-list" id="appliedFiltersList">
-                  <span class="applied-filter-empty">Sin filtros activos</span>
-                </div>
+            <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
+              <div class="applied-filters-head">
+                <span>Filtros aplicados</span>
+                <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
               </div>
-              <div class="result-summary-row model-one-summary">
-                <span id="resultSummary">Mostrando 0 productos</span>
-                <span id="pageSummary">Página 1</span>
-              </div>
-              <div class="product-table-wrap model-one-list">
-                <div class="product-head"><div>Producto</div><div>Variantes</div><div>Colores</div><div>Tallas</div></div>
-                <div class="product-list" id="productGrid"></div>
-              </div>
-              <div class="pagination inline-pagination">
-                <button class="ghost-btn" id="btnPrevPage" type="button">←</button>
-                <span id="paginationText">Página 1</span>
-                <button class="ghost-btn" id="btnNextPage" type="button">→</button>
+              <div class="applied-filters-list" id="appliedFiltersList">
+                <span class="applied-filter-empty">Sin filtros activos</span>
               </div>
             </div>
+            <div class="result-summary-row model-one-summary">
+              <span id="resultSummary">Mostrando 0 productos</span>
+              <span id="pageSummary">Página 1</span>
+            </div>
+            <div class="product-table-wrap model-one-list">
+              <div class="product-head"><div>Producto</div><div>Variantes</div><div>Colores</div><div>Tallas</div></div>
+              <div class="product-list" id="productGrid"></div>
+            </div>
+            <div class="pagination inline-pagination">
+              <button class="ghost-btn" id="btnPrevPage" type="button">←</button>
+              <span id="paginationText">Página 1</span>
+              <button class="ghost-btn" id="btnNextPage" type="button">→</button>
+            </div>
           </div>
+        </div>
 
           <aside class="selected-panel">
             <div class="selected-panel-title">Vista rápida del producto</div>

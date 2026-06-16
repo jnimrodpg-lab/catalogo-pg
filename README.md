@@ -61,3 +61,10 @@ V19
 - Ajusta offset del panel de información del visor a 6px arriba, abajo y derecha.
 - Oculta etiqueta Producto y texto de familia agrupada.
 - Reubica botón de cierre visualmente dentro del panel de información.
+
+## v43 fix
+Esta versión sincroniza los cambios Champagne Luxury también dentro de /public, que es la carpeta usada por Cloudflare Pages. Incluye:
+- Paleta Champagne Luxury aplicada.
+- Botón "Buscar por categoría" en la misma fila del buscador.
+- Opción "Categorías" removida de la barra lateral izquierda.
+- Filtro de categoría oculto del panel lateral, manteniendo compatibilidad interna.
