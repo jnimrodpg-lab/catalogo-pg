@@ -70,63 +70,86 @@
         </div>
       </header>
 
-      <section class="catalog-view view active" id="viewCatalog">
-        <div class="client-search-shell glass-panel model-one-search simplified-search-shell">
-          <div class="search-client-head simplified">
-            <strong>Busca tu producto</strong>
-            <div class="search-client-actions">
-              <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
-              <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
-            </div>
-          </div>
-          <div class="search-client-row simplified-search-row">
+      <section class="catalog-view view active showroom-view" id="viewCatalog">
+        <div class="showroom-topbar glass-panel">
+          <div class="showroom-search-wrap">
             <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
             <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
-            <button class="scan-btn" id="btnScanFake" type="button">Escanear código</button>
-            <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Buscar por categoría</button>
           </div>
-          <div class="filter-row compact-filters hidden" aria-hidden="true">
-            <select id="filterBrand"><option value="">Todas las marcas</option></select>
-            <select id="filterCategory"><option value="">Todas las categorías</option></select>
-            <select id="filterWarehouse"><option value="">Todos los almacenes</option></select>
-            <select id="filterImage"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
-            <button class="ghost-btn" id="btnHiddenClearFilters" type="button">Limpiar filtros</button>
-          </div>
+          <button class="scan-btn showroom-scan-btn" type="button">Escanear código</button>
+          <button class="ghost-btn category-btn showroom-category-btn" id="btnOpenCategoryBrowser" type="button">Explorar categorías</button>
+          <button class="icon-config-btn" id="btnOpenAdminPanel" type="button" aria-label="Configuración">⚙</button>
         </div>
 
-        <div class="product-client-stage glass-panel model-one-board">
-          <div class="groups-panel">
-            <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
-              <div class="applied-filters-head">
-                <span>Filtros aplicados</span>
-                <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
+        <div class="showroom-stage">
+          <aside class="showroom-filters-shell">
+            <div class="showroom-filter-rail glass-panel">
+              <button class="showroom-rail-item active" type="button"><span>⎇</span><small>Filtros</small></button>
+              <button class="showroom-rail-item" type="button"><span>◫</span><small>Categorías</small></button>
+              <button class="showroom-rail-item" type="button"><span>♡</span><small>Marcas</small></button>
+              <button class="showroom-rail-item" type="button"><span>◌</span><small>Colores</small></button>
+              <button class="showroom-rail-item" type="button"><span>﹩</span><small>Precio</small></button>
+              <button class="showroom-rail-item danger" id="btnDisableFilters" type="button"><span>⌫</span><small>Limpiar</small></button>
+            </div>
+            <div class="showroom-filters glass-panel" id="mainFilterPanel" aria-hidden="false">
+              <div class="showroom-filter-head">
+                <div>
+                  <h3>Filtros</h3>
+                  <p>Refina la búsqueda con lo esencial.</p>
+                </div>
+                <button class="showroom-filter-close" id="btnToggleMainFilters" type="button" aria-expanded="true">×</button>
               </div>
-              <div class="applied-filters-list" id="appliedFiltersList">
-                <span class="applied-filter-empty">Sin filtros activos</span>
+              <div class="applied-filters-panel applied-filters-panel-inline showroom-applied-panel" id="appliedFiltersPanel">
+                <div class="applied-filters-head">
+                  <span>Filtros aplicados</span>
+                  <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
+                </div>
+                <div class="applied-filters-list" id="appliedFiltersList">
+                  <span class="applied-filter-empty">Sin filtros activos</span>
+                </div>
               </div>
+              <div class="showroom-filter-grid">
+                <label><span>Género / Categoría</span><select id="filterCategory"><option value="">Todas las categorías</option></select></label>
+                <label><span>Marca</span><select id="filterBrand"><option value="">Todas las marcas</option></select></label>
+                <label><span>Talla</span><select id="filterSize"><option value="">Todas las tallas</option></select></label>
+                <label><span>Color</span><select id="filterColor"><option value="">Todos los colores</option></select></label>
+              </div>
+              <div class="showroom-filter-actions">
+                <button class="ghost-btn" id="btnHiddenClearFilters" type="button">Restablecer</button>
+                <button class="scan-btn" type="button" id="btnApplySidebarFilters">Ver resultados</button>
+              </div>
+              <select id="filterWarehouse" class="hidden"><option value="">Todos los almacenes</option></select>
+              <select id="filterImage" class="hidden"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
             </div>
-            <div class="result-summary-row model-one-summary">
-              <span id="resultSummary">Mostrando 0 productos</span>
-              <span id="pageSummary">Página 1</span>
+          </aside>
+
+          <section class="showroom-results glass-panel">
+            <div class="showroom-results-head">
+              <div class="result-summary-row model-one-summary">
+                <span id="resultSummary">Mostrando 0 productos</span>
+              </div>
+              <label class="showroom-sort-wrap">Ordenar por
+                <select id="sortSelect">
+                  <option value="relevant">Más relevantes</option>
+                  <option value="name-asc">Nombre A–Z</option>
+                  <option value="name-desc">Nombre Z–A</option>
+                  <option value="brand">Marca</option>
+                </select>
+              </label>
             </div>
-            <div class="product-table-wrap model-one-list">
-              <div class="product-head"><div>Producto</div><div>Variantes</div><div>Colores</div><div>Tallas</div></div>
-              <div class="product-list" id="productGrid"></div>
-            </div>
-            <div class="pagination inline-pagination">
+            <div class="product-list showroom-product-list" id="productGrid"></div>
+            <div class="pagination showroom-pagination">
               <button class="ghost-btn" id="btnPrevPage" type="button">←</button>
               <span id="paginationText">Página 1</span>
               <button class="ghost-btn" id="btnNextPage" type="button">→</button>
             </div>
-          </div>
+          </section>
 
-          <aside class="selected-panel">
-            <div class="selected-panel-title">Vista rápida del producto</div>
+          <aside class="selected-panel showroom-selected-panel">
             <article class="search-card active-product-card is-clickable" id="activeProductCard" tabindex="0" aria-label="Abrir visor de producto">
               <button class="search-card-expand-close" id="activeProductCardClose" type="button" aria-label="Cerrar visor">×</button>
               <div class="product-photo" id="activeProductMedia"><div class="media-empty">Selecciona un producto</div></div>
               <div class="search-card-body">
-                <div class="eyebrow green">Producto</div>
                 <div class="search-card-title-row">
                   <div>
                     <div class="search-card-title" id="activeProductName">Busca o selecciona un producto</div>
@@ -134,22 +157,25 @@
                   </div>
                 </div>
                 <div class="search-card-meta">
-                  <div class="search-meta-block" data-card-field="ubicacion"><span class="search-meta-label">Ubicación</span><b class="search-meta-value" id="activeProductLocation">—</b></div>
-                  <div class="search-meta-block" data-card-field="almacen"><span class="search-meta-label">Almacén</span><b class="search-meta-value store" id="activeProductWarehouse">—</b></div>
                   <div class="search-meta-block" data-card-field="marca"><span class="search-meta-label">Marca</span><b class="search-meta-value" id="activeProductBrand">—</b></div>
                   <div class="search-meta-block" data-card-field="categoria"><span class="search-meta-label">Categoría</span><b class="search-meta-value" id="activeProductCategory">—</b></div>
-                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="stock"><span class="search-meta-label">Stock</span><b class="search-meta-value" id="activeProductStock">—</b></div>
-                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="precio"><span class="search-meta-label">Precio</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
+                  <div class="search-meta-block optional-card-field" data-card-field="precio"><span class="search-meta-label">Precio sugerido</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
+                  <div class="search-meta-block optional-card-field" data-card-field="stock"><span class="search-meta-label">Stock disponible</span><b class="search-meta-value" id="activeProductStock">—</b></div>
+                  <div class="search-meta-block hidden" data-card-field="ubicacion"><span class="search-meta-label">Ubicación</span><b class="search-meta-value" id="activeProductLocation">—</b></div>
+                  <div class="search-meta-block hidden" data-card-field="almacen"><span class="search-meta-label">Almacén</span><b class="search-meta-value store" id="activeProductWarehouse">—</b></div>
                 </div>
-                <div class="active-meta-line" id="activeProductMeta">Variante activa: —</div>
                 <div class="variant-groups">
                   <div class="variant-group" data-card-field="talla"><span class="variant-group-label">Talla</span><div class="variant-strip" id="activeSizeStrip"></div></div>
-                  <div class="variant-group" data-card-field="color"><span class="variant-group-label">Color</span><div class="variant-strip" id="activeColorStrip"></div></div>
+                  <div class="variant-group" data-card-field="color"><span class="variant-group-label">Color</span><div class="variant-strip showroom-color-strip" id="activeColorStrip"></div></div>
                 </div>
                 <div class="search-card-actions-row">
-                  <button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="request">Agregar a solicitud</button>
+                  <button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="request">Solicitar ahora</button>
                 </div>
-                <div class="search-card-expand-hint">Haz clic para ampliar el producto</div>
+                <div class="showroom-service-row">
+                  <div><strong>Envíos</strong><span>A todo el país</span></div>
+                  <div><strong>Cambios</strong><span>y devoluciones</span></div>
+                  <div><strong>Pago</strong><span>seguro</span></div>
+                </div>
               </div>
             </article>
           </aside>
@@ -281,6 +307,16 @@
           <h2>Entrar al catálogo</h2>
           <p>Admin puede vincular Sheets y configurar. Viewer solo observa y busca productos.</p>
         </div>
+      </div>
+      <div class="login-role-choice" id="loginRoleChoice" aria-label="Tipo de ingreso">
+        <button class="login-role-card active" data-login-role="admin" type="button">
+          <b>Ingresar como administrador</b>
+          <span>Vincular Sheet, importar productos y configurar el catálogo.</span>
+        </button>
+        <button class="login-role-card" data-login-role="viewer" type="button">
+          <b>Ingresar como visualizador</b>
+          <span>Solo ver, buscar y agregar productos a solicitud.</span>
+        </button>
       </div>
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth-mode="login" type="button">Ingresar</button>
