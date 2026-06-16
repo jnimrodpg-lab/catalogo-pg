@@ -89,12 +89,13 @@
 
         <div class="product-client-stage glass-panel model-one-board">
           <aside class="showroom-filter-sidebar">
-            <div class="showroom-filter-rail" aria-hidden="true">
-              <div class="rail-item active"><span>⎇</span><small>Filtros</small></div>
-              <div class="rail-item"><span>◫</span><small>Categorías</small></div>
-              <div class="rail-item"><span>♡</span><small>Marcas</small></div>
-              <div class="rail-item"><span>◌</span><small>Colores</small></div>
-              <div class="rail-item"><span>$</span><small>Precio</small></div>
+            <div class="showroom-filter-rail" aria-label="Acciones de filtros">
+              <button class="rail-item active" type="button" data-rail-action="filters" aria-label="Mostrar filtros"><span>⎇</span><small>Filtros</small></button>
+              <button class="rail-item" type="button" data-rail-action="categories" aria-label="Explorar categorías"><span>◫</span><small>Categorías</small></button>
+              <button class="rail-item" type="button" data-rail-action="brands" aria-label="Filtrar por marca"><span>♡</span><small>Marcas</small></button>
+              <button class="rail-item" type="button" data-rail-action="sizes" aria-label="Filtrar por talla"><span>△</span><small>Tallas</small></button>
+              <button class="rail-item" type="button" data-rail-action="colors" aria-label="Filtrar por color"><span>◌</span><small>Colores</small></button>
+              <button class="rail-item danger" type="button" data-rail-action="clear" aria-label="Limpiar filtros"><span>⌫</span><small>Limpiar</small></button>
             </div>
             <div class="showroom-filter-card" id="mainFilterPanel" aria-hidden="false">
               <div class="showroom-filter-title">

@@ -237,6 +237,7 @@
     bindClientConfigControls();
     $('#btnToggleMainFilters')?.addEventListener('click', () => setMainFiltersOpen(!state.mainFiltersOpen));
     $('#btnCloseSidebarFilters')?.addEventListener('click', () => setMainFiltersOpen(false));
+    $$('.showroom-filter-rail [data-rail-action]').forEach(btn => btn.addEventListener('click', () => handleRailAction(btn.dataset.railAction || 'filters')));
     $('#btnSidebarResult')?.addEventListener('click', () => { state.page = 1; loadProducts(); });
     $('#btnOpenCategoryBrowser')?.addEventListener('click', openCategoryBrowser);
     $('#btnCloseCategoryBrowser')?.addEventListener('click', closeCategoryBrowser);
@@ -259,6 +260,8 @@
     state.mainFiltersOpen = !!open;
     const panel = $('#mainFilterPanel');
     const btn = $('#btnToggleMainFilters');
+    document.body.classList.toggle('sidebar-filters-collapsed', !state.mainFiltersOpen);
+    document.body.classList.toggle('sidebar-filters-open', state.mainFiltersOpen);
     if (panel) {
       panel.classList.toggle('hidden', !state.mainFiltersOpen);
       panel.setAttribute('aria-hidden', state.mainFiltersOpen ? 'false' : 'true');
@@ -268,6 +271,36 @@
       btn.setAttribute('aria-expanded', state.mainFiltersOpen ? 'true' : 'false');
       btn.textContent = state.mainFiltersOpen ? 'Ocultar filtros' : 'Filtros';
     }
+    $$('.showroom-filter-rail [data-rail-action]').forEach(el => {
+      const action = el.dataset.railAction || '';
+      el.classList.toggle('active', state.mainFiltersOpen && ['filters','brands','sizes','colors'].includes(action));
+    });
+  }
+
+  function focusFilterControl(id) {
+    setMainFiltersOpen(true);
+    requestAnimationFrame(() => {
+      const el = $(`#${id}`);
+      if (!el) return;
+      el.focus({ preventScroll: true });
+      el.classList.add('attention-pulse');
+      setTimeout(() => el.classList.remove('attention-pulse'), 900);
+    });
+  }
+
+  function handleRailAction(action) {
+    if (action === 'categories') return openCategoryBrowser();
+    if (action === 'brands') return focusFilterControl('filterBrand');
+    if (action === 'sizes') return focusFilterControl('filterSize');
+    if (action === 'colors') return focusFilterControl('filterColor');
+    if (action === 'clear') {
+      resetAllFilters(false);
+      setMainFiltersOpen(false);
+      state.page = 1;
+      loadProducts();
+      return;
+    }
+    setMainFiltersOpen(!state.mainFiltersOpen);
   }
 
   function setLoginAccessMode(mode) {
@@ -1735,7 +1768,7 @@
 
   setLoginAccessMode('admin');
   setAuthMode('login');
-  setMainFiltersOpen(false);
   document.body.classList.add('catalog-fit-mode');
+  setMainFiltersOpen(true);
   init();
 })();
