@@ -2015,3 +2015,53 @@ body.catalog-fit-mode .selected-panel{
   body.catalog-fit-mode .showroom-filter-rail{display:none!important}
   body.catalog-fit-mode .showroom-filter-card.hidden{display:none!important}
 }
+
+/* v39 · optimización del modal de categorías */
+html, body{overflow-x:hidden!important}
+.category-browser-backdrop{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  background:rgba(1,8,16,.72)!important;
+  contain:layout paint!important;
+}
+.category-browser-panel{
+  transform:translateZ(0)!important;
+  will-change:auto!important;
+  contain:layout paint style!important;
+  content-visibility:visible!important;
+  overflow:hidden!important;
+}
+.category-browser-grid{
+  contain:layout paint!important;
+}
+.category-browser-grid .category-tile{
+  content-visibility:auto!important;
+  contain-intrinsic-size:176px!important;
+  transform:translateZ(0)!important;
+  will-change:auto!important;
+}
+.category-browser-grid .category-tile-media img{
+  transform:translateZ(0)!important;
+  backface-visibility:hidden!important;
+}
+.category-browser-backdrop.category-loading .category-browser-grid{
+  min-height:370px!important;
+  position:relative!important;
+}
+.category-browser-backdrop.category-loading .category-browser-grid:empty::before,
+.category-browser-backdrop.category-loading .category-browser-grid::before{
+  content:'Cargando categorías…';
+  display:none;
+  position:absolute;
+  inset:0;
+  place-items:center;
+  border:1px dashed rgba(255,255,255,.14);
+  border-radius:22px;
+  color:#b9ccd9;
+  background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(126,231,183,.05),rgba(255,255,255,.03));
+}
+.category-browser-backdrop.category-loading .category-browser-grid:empty::before{display:grid}
+.category-page-btn,.category-tile,.category-audience-chip,#btnToggleCategoryFilters{touch-action:manipulation!important}
+@media (min-width:1081px){
+  body.category-browser-open{overflow:hidden!important}
+}

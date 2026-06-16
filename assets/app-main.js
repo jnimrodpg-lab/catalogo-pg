@@ -57,6 +57,8 @@
     categoryAudienceFilter: '',
     categoryBrowserProducts: [],
     categoryBrowserPage: 1,
+    categoryCache: {},
+    categoryHydrating: false,
     categoryQuickFiltersOpen: false,
     mainFiltersOpen: true,
     loginAccessMode: 'admin',
@@ -202,8 +204,8 @@
     $('#btnDoAuth').addEventListener('click', doAuth);
     $$('.auth-tab').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
     $$('.login-role-card').forEach(btn => btn.addEventListener('click', () => setLoginAccessMode(btn.dataset.loginRole || 'admin')));
-    $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.categoryBrowserProducts = []; state.page = 1; await loadSheetConfig(); await loadProducts(); });
-    $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.categoryBrowserProducts = []; state.page = 1; if (state.publicMode) renderLocalPublicProducts(); else await loadProducts(); });
+    $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.categoryBrowserProducts = []; resetCategoryCache(); state.page = 1; await loadSheetConfig(); await loadProducts(); });
+    $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.categoryBrowserProducts = []; resetCategoryCache(); state.page = 1; if (state.publicMode) renderLocalPublicProducts(); else await loadProducts(); });
     $('#btnReloadProducts').addEventListener('click', () => loadProducts());
     $('#btnSearch').addEventListener('click', () => { state.page = 1; loadProducts(); });
     $('#btnIndividualView')?.addEventListener('click', () => openActiveProductCard());
@@ -242,7 +244,7 @@
     $('#btnOpenCategoryBrowser')?.addEventListener('click', openCategoryBrowser);
     $('#btnCloseCategoryBrowser')?.addEventListener('click', closeCategoryBrowser);
     $('#categoryBrowser')?.addEventListener('click', e => { if (e.target?.id === 'categoryBrowser') closeCategoryBrowser(); });
-    $$('.category-audience-chip').forEach(btn => btn.addEventListener('click', () => { state.categoryAudience = btn.dataset.audience || 'all'; state.categoryBrowserPage = 1; renderCategoryBrowser(); }));
+    $$('.category-audience-chip').forEach(btn => btn.addEventListener('click', () => { state.categoryAudience = btn.dataset.audience || 'all'; state.categoryBrowserPage = 1; requestAnimationFrame(renderCategoryBrowser); }));
     $('#btnApplyQuickFilters')?.addEventListener('click', applyQuickFiltersFromModal);
     $('#btnResetQuickFilters')?.addEventListener('click', () => { resetQuickFiltersUI(); renderQuickFilterOptions(categorySourceProducts()); });
     $('#btnToggleCategoryFilters')?.addEventListener('click', toggleCategoryQuickFilters);
@@ -438,6 +440,25 @@
     return ({ all:'Todo', mujer:'Mujer', varon:'Varón', nino:'Niño', nina:'Niña', bebe:'Bebé', unisex:'Unisex' })[key] || 'Todo';
   }
 
+  function resetCategoryCache() {
+    state.categoryCache = {};
+    state.categoryHydrating = false;
+  }
+
+  function categorySourceKey(source) {
+    const list = source || [];
+    const first = list[0] || {};
+    const last = list[list.length - 1] || {};
+    return [
+      state.publicMode ? 'public' : 'admin',
+      state.token || '',
+      state.branchId || '',
+      list.length,
+      norm(val(first,'nombre') || val(first,'sku') || val(first,'categoria') || ''),
+      norm(val(last,'nombre') || val(last,'sku') || val(last,'categoria') || '')
+    ].join('|');
+  }
+
   function categorySourceProducts() {
     if (Array.isArray(state.categoryBrowserProducts) && state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
     if (state.publicMode && Array.isArray(state.products) && state.products.length) return state.products;
@@ -491,6 +512,9 @@
   function toggleCategoryQuickFilters(force) {
     state.categoryQuickFiltersOpen = typeof force === 'boolean' ? force : !state.categoryQuickFiltersOpen;
     updateCategoryQuickFiltersVisibility();
+    if (state.categoryQuickFiltersOpen) {
+      requestAnimationFrame(() => renderQuickFilterOptions(categorySourceProducts()));
+    }
   }
 
   function categoryCardThumb(product, idx = 0) {
@@ -498,7 +522,7 @@
     if (!src) return `<div class="category-tile-placeholder">${esc((val(product,'categoria') || val(product,'nombre') || 'Categoría').slice(0,1).toUpperCase())}</div>`;
     const id = driveId(src);
     const img = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w800` : src;
-    return `<img src="${esc(img)}" alt="${esc(val(product,'categoria') || 'Categoría')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;category-tile-placeholder&quot;>${esc((val(product,'categoria') || 'C').slice(0,1).toUpperCase())}</div>'">`;
+    return `<img src="${esc(img)}" alt="${esc(val(product,'categoria') || 'Categoría')}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.parentElement.innerHTML='<div class=&quot;category-tile-placeholder&quot;>${esc((val(product,'categoria') || 'C').slice(0,1).toUpperCase())}</div>'">`;
   }
 
   function renderCategoryBrowser() {
@@ -509,22 +533,32 @@
     const audience = state.categoryAudience || 'all';
     $$('.category-audience-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.audience === audience));
     const source = categorySourceProducts();
-    const map = new Map();
-    source.forEach((product, idx) => {
-      const category = val(product,'categoria') || 'Sin categoría';
-      const key = norm(category) || 'sin-categoria';
-      const hitAudience = inferAudience(product);
-      if (audience !== 'all' && hitAudience !== audience) return;
-      if (!map.has(key)) map.set(key, { key, category, audience: hitAudience, items: [], familyKeys: new Set(), sample: null, idx });
-      const entry = map.get(key);
-      entry.items.push(product);
-      entry.familyKeys.add(productGroupKey(product) || `family-${idx}`);
-      if (!entry.sample || mediaUrl(product)) entry.sample = product;
-    });
+    const cacheKey = categorySourceKey(source);
+    state.categoryCache ||= {};
+    const cacheBucket = state.categoryCache[cacheKey] ||= {};
+    let cached = cacheBucket[audience];
 
-    const allItems = [...map.values()].sort((a,b) => String(a.category).localeCompare(String(b.category), 'es'));
-    const visualItems = allItems.filter(entry => mediaUrl(entry.sample || entry.items[0] || {}));
-    const items = visualItems.length ? visualItems : allItems;
+    if (!cached) {
+      const map = new Map();
+      source.forEach((product, idx) => {
+        const category = val(product,'categoria') || 'Sin categoría';
+        const key = norm(category) || 'sin-categoria';
+        const hitAudience = inferAudience(product);
+        if (audience !== 'all' && hitAudience !== audience) return;
+        if (!map.has(key)) map.set(key, { key, category, audience: hitAudience, items: [], familyKeys: new Set(), sample: null, idx });
+        const entry = map.get(key);
+        entry.items.push(product);
+        entry.familyKeys.add(productGroupKey(product) || `family-${idx}`);
+        if (!entry.sample || mediaUrl(product)) entry.sample = product;
+      });
+      const allItems = [...map.values()].sort((a,b) => String(a.category).localeCompare(String(b.category), 'es'));
+      const visualItems = allItems.filter(entry => mediaUrl(entry.sample || entry.items[0] || {}));
+      const items = visualItems.length ? visualItems : allItems;
+      cached = { items, allCount: allItems.length, visualCount: visualItems.length };
+      cacheBucket[audience] = cached;
+    }
+
+    const items = cached.items || [];
     const perPage = 8;
     const totalPages = Math.max(1, Math.ceil(items.length / perPage));
     state.categoryBrowserPage = Math.min(Math.max(state.categoryBrowserPage || 1, 1), totalPages);
@@ -532,7 +566,7 @@
     const start = (currentPage - 1) * perPage;
     const pageItems = items.slice(start, start + perPage);
 
-    renderQuickFilterOptions(source);
+    if (state.categoryQuickFiltersOpen) renderQuickFilterOptions(source);
     updateCategoryQuickFiltersVisibility();
 
     if (toolbar) {
@@ -541,7 +575,7 @@
       toolbar.innerHTML = `
         <div class="category-browser-toolbar-copy">
           <strong>Categorías visuales</strong>
-          <span>Mostrando ${esc(String(rangeStart))}-${esc(String(rangeEnd))} de ${esc(String(items.length))} categorías${visualItems.length && visualItems.length !== allItems.length ? ' con imagen' : ''}.</span>
+          <span>Mostrando ${esc(String(rangeStart))}-${esc(String(rangeEnd))} de ${esc(String(items.length))} categorías${cached.visualCount && cached.visualCount !== cached.allCount ? ' con imagen' : ''}.</span>
         </div>
         <div class="category-browser-pager" aria-label="Navegación de categorías">
           <button type="button" class="category-page-btn" id="categoryPagePrev" ${currentPage <= 1 ? 'disabled' : ''} aria-label="Página anterior">‹</button>
@@ -551,19 +585,20 @@
       $('#categoryPagePrev', toolbar)?.addEventListener('click', () => {
         if (state.categoryBrowserPage > 1) {
           state.categoryBrowserPage -= 1;
-          renderCategoryBrowser();
+          requestAnimationFrame(renderCategoryBrowser);
         }
       });
       $('#categoryPageNext', toolbar)?.addEventListener('click', () => {
         if (state.categoryBrowserPage < totalPages) {
           state.categoryBrowserPage += 1;
-          renderCategoryBrowser();
+          requestAnimationFrame(renderCategoryBrowser);
         }
       });
     }
 
     if (!items.length) {
       grid.innerHTML = `<div class="category-browser-empty">No encontramos categorías para ${esc(audienceLabel(audience).toLowerCase())}. Prueba con otro filtro.</div>`;
+      modal.classList.remove('category-loading');
       return;
     }
 
@@ -578,6 +613,7 @@
       </button>`;
     }).join('');
     $$('.category-tile', grid).forEach(btn => btn.addEventListener('click', () => applyCategorySelection(btn.dataset.category || '', btn.dataset.audience || 'all')));
+    modal.classList.remove('category-loading');
   }
 
   function resetAllFilters(includeSearch = false) {
@@ -780,13 +816,24 @@
   async function openCategoryBrowser() {
     state.categoryAudience = 'all';
     state.categoryBrowserPage = 1;
-    state.categoryBrowserProducts = [];
-    await hydrateCategoryBrowserProducts(true);
     syncQuickFiltersFromState();
-    renderCategoryBrowser();
-    $('#categoryBrowser')?.classList.add('open');
-    $('#categoryBrowser')?.setAttribute('aria-hidden', 'false');
+    const modal = $('#categoryBrowser');
+    modal?.classList.add('open', 'category-loading');
+    modal?.setAttribute('aria-hidden', 'false');
     document.body.classList.add('category-browser-open');
+
+    requestAnimationFrame(() => {
+      renderCategoryBrowser();
+      if (!state.categoryHydrating && !(Array.isArray(state.categoryBrowserProducts) && state.categoryBrowserProducts.length)) {
+        state.categoryHydrating = true;
+        setTimeout(async () => {
+          await hydrateCategoryBrowserProducts(false);
+          resetCategoryCache();
+          state.categoryHydrating = false;
+          if ($('#categoryBrowser')?.classList.contains('open')) requestAnimationFrame(renderCategoryBrowser);
+        }, 0);
+      }
+    });
   }
 
   function closeCategoryBrowser() {
@@ -998,7 +1045,7 @@
     const id = driveId(src);
     const img = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w320` : src;
     if (/\.mp4($|\?)/i.test(src) && !id) return `<video src="${esc(src)}" muted loop playsinline></video>`;
-    return `<img src="${esc(img)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;group-thumb-empty&quot;>—</div>'">`;
+    return `<img src="${esc(img)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.parentElement.innerHTML='<div class=&quot;group-thumb-empty&quot;>—</div>'">`;
   }
 
   function renderMedia(product, mode = 'card') {
@@ -1021,7 +1068,7 @@
       if (/\.mp4($|\?)/i.test(src)) return `<video src="${esc(src)}" controls muted loop playsinline preload="metadata"></video>`;
     }
     const finalSrc = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1600` : src;
-    return `<img src="${esc(finalSrc)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove();">`;
+    return `<img src="${esc(finalSrc)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.parentElement.classList.add('empty');this.remove();">`;
   }
 
   function productIdentity(product) {
