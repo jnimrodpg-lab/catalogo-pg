@@ -198,9 +198,11 @@
     $('#btnOpenAdminPanel')?.addEventListener('click', openAdminPanel);
     $('#adminPanelScrim')?.addEventListener('click', closeAdminPanel);
     ['viewSheet','viewSettings'].forEach(id => {
-      $(`#${id}`)?.addEventListener('click', e => {
-        if (e.target?.closest('.setup-panel')) return;
-        if (e.target?.closest('button, input, select, textarea, label, a')) return;
+      const section = $(`#${id}`);
+      const panel = $('.setup-panel', section);
+      panel?.addEventListener('click', e => e.stopPropagation());
+      section?.addEventListener('click', e => {
+        if (e.target !== section) return;
         setView('catalog');
         closeAdminPanel();
       });
