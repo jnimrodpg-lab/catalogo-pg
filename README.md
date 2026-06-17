@@ -72,10 +72,3 @@ Esta versión sincroniza los cambios Champagne Luxury también dentro de /public
 
 Actualización v53:
 - Se agregó el selector de Categoría dentro del panel lateral de Filtros, justo debajo del encabezado y manteniendo también el botón Categoría junto al buscador.
-
-
-Actualización v54:
-- Mejor contraste de textos en Configuración y Vincular Sheet.
-- Cerrar Configuración/Vincular Sheet al hacer click fuera del cuadro.
-- Al cerrar el panel lateral de configuración, vuelve a Catálogo automáticamente.
-- Se redujo ligeramente el tamaño del cuadro principal en Configuración y Vincular Sheet.

@@ -197,6 +197,14 @@
     $('#btnToggleSidebar')?.addEventListener('click', closeAdminPanel);
     $('#btnOpenAdminPanel')?.addEventListener('click', openAdminPanel);
     $('#adminPanelScrim')?.addEventListener('click', closeAdminPanel);
+    ['viewSheet','viewSettings'].forEach(id => {
+      $(`#${id}`)?.addEventListener('click', e => {
+        if (e.target?.closest('.setup-panel')) return;
+        if (e.target?.closest('button, input, select, textarea, label, a')) return;
+        setView('catalog');
+        closeAdminPanel();
+      });
+    });
     applyAdminPanelState();
     $('#btnGoSheet').addEventListener('click', () => { openAdminPanel(); setView('sheet'); });
     $('#btnAuth').addEventListener('click', authAction);
@@ -253,7 +261,18 @@
     });
     $('#searchCardOverlay')?.addEventListener('click', closeActiveProductCard);
     $('#activeProductCardClose')?.addEventListener('click', e => { e.stopPropagation(); closeActiveProductCard(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeActiveProductCard(); closeRequestDrawer(); closeCategoryBrowser(); } if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeActiveProductCard();
+        closeRequestDrawer();
+        closeCategoryBrowser();
+        if ($('#viewSheet')?.classList.contains('active') || $('#viewSettings')?.classList.contains('active') || document.body.classList.contains('admin-panel-open')) {
+          setView('catalog');
+          closeAdminPanel();
+        }
+      }
+      if ($('#activeProductCard')?.classList.contains('search-card-expanded')) handleExpandedKeys(e);
+    });
     renderRequestCart();
     renderAppliedFilters();
   }
@@ -1809,6 +1828,9 @@
 
   function closeAdminPanel() {
     state.adminPanelOpen = false;
+    if ($('#viewSheet')?.classList.contains('active') || $('#viewSettings')?.classList.contains('active')) {
+      setView('catalog');
+    }
     applyAdminPanelState();
   }
 
