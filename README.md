@@ -78,3 +78,9 @@ Actualización v58:
 - Se agregó un botón flotante de engranaje visible en Vincular Sheet y Configuración.
 - El engranaje permite reabrir el panel de opciones sin recargar ni volver al catálogo.
 - Se mantiene oculto en vista catálogo para no duplicar el botón de Ajustes del lateral.
+
+
+Actualización v67:
+- Viewer puede entrar sin usuario/contraseña desde el selector de acceso.
+- Lista central en 2 columnas de productos.
+- Se ocultó el contador de variantes dentro de cada card/listado.
