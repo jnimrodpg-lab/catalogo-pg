@@ -4772,3 +4772,24 @@ html body.catalog-fit-mode .model-one-list{
     min-height:120px!important;
   }
 }
+
+/* v70 · corrección exclusiva del login admin/viewer */
+.login-role-choice{align-items:stretch!important;}
+.login-role-card{position:relative!important;user-select:none!important;}
+.login-role-card.active::after{
+  content:'✓';
+  position:absolute;
+  right:14px;
+  top:12px;
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:rgba(79,195,133,.22);
+  color:#2f8e61;
+  font-weight:900;
+}
+.login-as-viewer #btnDoAuth{background:linear-gradient(135deg,#4fc385,#2d9468)!important;color:#fff!important;border-color:rgba(54,154,104,.35)!important;}
+#btnDoAuth:disabled{opacity:.72!important;cursor:wait!important;}
+body:not(.login-as-viewer) #btnDoAuth{background:linear-gradient(135deg,#d1a04a,#b87922)!important;color:#fff!important;border-color:rgba(184,121,34,.35)!important;}

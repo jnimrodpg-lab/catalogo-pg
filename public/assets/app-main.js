@@ -355,20 +355,35 @@
     setMainFiltersOpen(!state.mainFiltersOpen);
   }
 
+  function getAuthSubmitText() {
+    if (state.authMode === 'register') return 'Crear cuenta';
+    return state.loginAccessMode === 'viewer' ? 'Ingresar como visualizador' : 'Ingresar como administrador';
+  }
+
+  function updateAuthSubmitButton() {
+    const btn = $('#btnDoAuth');
+    if (!btn) return;
+    btn.textContent = getAuthSubmitText();
+    btn.dataset.loginRole = state.loginAccessMode || 'admin';
+    btn.disabled = false;
+  }
+
   function setLoginAccessMode(mode) {
     state.loginAccessMode = mode === 'viewer' ? 'viewer' : 'admin';
     $$('.login-role-card').forEach(btn => btn.classList.toggle('active', btn.dataset.loginRole === state.loginAccessMode));
     const role = $('#accountRole');
     if (role) role.value = state.loginAccessMode;
     document.body.classList.toggle('login-as-viewer', state.loginAccessMode === 'viewer');
+    updateAuthSubmitButton();
+    $('#authStatus').textContent = '';
   }
 
   function setAuthMode(mode) {
-    state.authMode = mode;
-    $$('.auth-tab').forEach(b => b.classList.toggle('active', b.dataset.authMode === mode));
-    $$('.register-only').forEach(el => el.classList.toggle('hidden', mode !== 'register'));
-    $('#loginRoleChoice')?.classList.toggle('register-mode', mode === 'register');
-    $('#btnDoAuth').textContent = mode === 'register' ? 'Crear cuenta' : (state.loginAccessMode === 'viewer' ? 'Ingresar como visualizador' : 'Ingresar como administrador');
+    state.authMode = mode === 'register' ? 'register' : 'login';
+    $$('.auth-tab').forEach(b => b.classList.toggle('active', b.dataset.authMode === state.authMode));
+    $$('.register-only').forEach(el => el.classList.toggle('hidden', state.authMode !== 'register'));
+    $('#loginRoleChoice')?.classList.toggle('register-mode', state.authMode === 'register');
+    updateAuthSubmitButton();
     $('#authStatus').textContent = '';
   }
 
@@ -378,36 +393,47 @@
       state.auth = null;
       state.branches = [];
       state.products = [];
+      setLoginAccessMode('admin');
+      setAuthMode('login');
       hydrateSessionLabel();
       $('#authModal').classList.add('show');
       renderEmptyState('Sesión cerrada.');
       return;
     }
+    updateAuthSubmitButton();
     $('#authModal').classList.add('show');
   }
 
   async function doAuth() {
+    const btn = $('#btnDoAuth');
+    const selectedRole = state.loginAccessMode === 'viewer' ? 'viewer' : 'admin';
+    const selectedAuthMode = state.authMode === 'register' ? 'register' : 'login';
     const payload = {
       username: $('#loginUsername').value.trim(),
       password: $('#loginPassword').value,
-      mode: $('#accountRole')?.value || 'admin',
+      mode: $('#accountRole')?.value || selectedRole,
       companyName: $('#companyName').value.trim(),
       companyCode: $('#companyCode').value.trim()
     };
-    $('#authStatus').textContent = 'Validando...';
+    $('#authStatus').textContent = selectedRole === 'viewer' && selectedAuthMode !== 'register' ? 'Entrando como visualizador...' : 'Validando...';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = selectedRole === 'viewer' && selectedAuthMode !== 'register' ? 'Entrando como visualizador...' : 'Validando...';
+    }
     try {
-      if (state.authMode !== 'register' && state.loginAccessMode === 'viewer') {
+      if (selectedAuthMode !== 'register' && selectedRole === 'viewer') {
         state.auth = await api('/viewer-login', { method:'POST', body: JSON.stringify({}) });
         state.auth.role = 'viewer';
       } else {
-        state.auth = await api(state.authMode === 'register' ? '/register' : '/login', { method:'POST', body: JSON.stringify(payload) });
+        state.auth = await api(selectedAuthMode === 'register' ? '/register' : '/login', { method:'POST', body: JSON.stringify(payload) });
       }
       $('#authModal').classList.remove('show');
       $('#authStatus').textContent = '';
       await loadBranches();
-      toast(state.loginAccessMode === 'viewer' ? 'Ingresaste como visualizador.' : 'Acceso correcto.');
+      toast(selectedRole === 'viewer' ? 'Ingresaste como visualizador.' : 'Acceso correcto.');
     } catch (err) {
       $('#authStatus').textContent = err.message;
+      updateAuthSubmitButton();
     }
   }
 

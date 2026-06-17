@@ -4696,8 +4696,8 @@ html body.catalog-fit-mode #productGrid.product-list{
   align-content:start!important;
 }
 html body.catalog-fit-mode .model-one-list .product-row{
-  min-height:126px!important;
-  height:126px!important;
+  min-height:132px!important;
+  height:132px!important;
   padding:10px 12px!important;
   grid-template-columns:1fr 28px!important;
   gap:10px!important;
@@ -4705,14 +4705,14 @@ html body.catalog-fit-mode .model-one-list .product-row{
   overflow:hidden!important;
 }
 html body.catalog-fit-mode .group-product-cell{
-  grid-template-columns:92px minmax(0,1fr)!important;
-  gap:12px!important;
+  grid-template-columns:112px minmax(0,1fr)!important;
+  gap:14px!important;
   min-width:0!important;
 }
 html body.catalog-fit-mode .group-thumb{
-  width:92px!important;
-  height:74px!important;
-  border-radius:16px!important;
+  width:112px!important;
+  height:108px!important;
+  border-radius:18px!important;
 }
 html body.catalog-fit-mode .group-info{
   min-width:0!important;
@@ -4768,7 +4768,28 @@ html body.catalog-fit-mode .model-one-list{
     grid-template-columns:1fr!important;
   }
   html body.catalog-fit-mode .model-one-list .product-row{
-    height:112px!important;
-    min-height:112px!important;
+    height:120px!important;
+    min-height:120px!important;
   }
 }
+
+/* v70 · corrección exclusiva del login admin/viewer */
+.login-role-choice{align-items:stretch!important;}
+.login-role-card{position:relative!important;user-select:none!important;}
+.login-role-card.active::after{
+  content:'✓';
+  position:absolute;
+  right:14px;
+  top:12px;
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:rgba(79,195,133,.22);
+  color:#2f8e61;
+  font-weight:900;
+}
+.login-as-viewer #btnDoAuth{background:linear-gradient(135deg,#4fc385,#2d9468)!important;color:#fff!important;border-color:rgba(54,154,104,.35)!important;}
+#btnDoAuth:disabled{opacity:.72!important;cursor:wait!important;}
+body:not(.login-as-viewer) #btnDoAuth{background:linear-gradient(135deg,#d1a04a,#b87922)!important;color:#fff!important;border-color:rgba(184,121,34,.35)!important;}
