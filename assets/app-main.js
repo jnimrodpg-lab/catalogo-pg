@@ -197,6 +197,14 @@
     $('#btnToggleSidebar')?.addEventListener('click', closeAdminPanel);
     $('#btnOpenAdminPanel')?.addEventListener('click', openAdminPanel);
     $('#adminPanelScrim')?.addEventListener('click', closeAdminPanel);
+    ['viewSheet','viewSettings'].forEach(id => {
+      $(`#${id}`)?.addEventListener('click', e => {
+        if (e.target?.closest('.setup-panel')) return;
+        if (e.target?.closest('button, input, select, textarea, label, a')) return;
+        setView('catalog');
+        closeAdminPanel();
+      });
+    });
     applyAdminPanelState();
     $('#btnGoSheet').addEventListener('click', () => { openAdminPanel(); setView('sheet'); });
     $('#btnAuth').addEventListener('click', authAction);
@@ -1809,6 +1817,9 @@
 
   function closeAdminPanel() {
     state.adminPanelOpen = false;
+    if ($('#viewSheet')?.classList.contains('active') || $('#viewSettings')?.classList.contains('active')) {
+      setView('catalog');
+    }
     applyAdminPanelState();
   }
 
