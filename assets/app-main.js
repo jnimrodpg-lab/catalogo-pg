@@ -193,22 +193,32 @@
   }
 
   function bindEvents() {
-    $$('.nav-item').forEach(btn => btn.addEventListener('click', () => { setView(btn.dataset.view); }));
+    $$('.nav-item').forEach(btn => btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const view = btn.dataset.view || 'catalog';
+      setView(view);
+      // Al escoger una vista del panel derecho, cerramos solo el menú flotante,
+      // pero NO regresamos al catálogo. Así se puede interactuar con Vincular Sheet
+      // o Configuración sin que el panel se cierre accidentalmente.
+      closeAdminPanel();
+    }));
     $('#btnToggleSidebar')?.addEventListener('click', closeAdminPanel);
     $('#btnOpenAdminPanel')?.addEventListener('click', openAdminPanel);
     $('#adminPanelScrim')?.addEventListener('click', closeAdminPanel);
     ['viewSheet','viewSettings'].forEach(id => {
       const section = $(`#${id}`);
       const panel = $('.setup-panel', section);
+      // Clic dentro del cuadro: mantener abierto y permitir editar.
       panel?.addEventListener('click', e => e.stopPropagation());
       section?.addEventListener('click', e => {
+        // Clic únicamente en el fondo de la vista: volver al catálogo.
         if (e.target !== section) return;
         setView('catalog');
         closeAdminPanel();
       });
     });
     applyAdminPanelState();
-    $('#btnGoSheet').addEventListener('click', () => { openAdminPanel(); setView('sheet'); });
+    $('#btnGoSheet').addEventListener('click', () => { setView('sheet'); closeAdminPanel(); });
     $('#btnAuth').addEventListener('click', authAction);
     $('#btnCloseAuth').addEventListener('click', () => $('#authModal').classList.remove('show'));
     $('#btnDoAuth').addEventListener('click', doAuth);
@@ -268,8 +278,10 @@
         closeActiveProductCard();
         closeRequestDrawer();
         closeCategoryBrowser();
-        if ($('#viewSheet')?.classList.contains('active') || $('#viewSettings')?.classList.contains('active') || document.body.classList.contains('admin-panel-open')) {
+        if ($('#viewSheet')?.classList.contains('active') || $('#viewSettings')?.classList.contains('active')) {
           setView('catalog');
+          closeAdminPanel();
+        } else if (document.body.classList.contains('admin-panel-open')) {
           closeAdminPanel();
         }
       }
@@ -1829,10 +1841,10 @@
   }
 
   function closeAdminPanel() {
+    // Solo cierra el panel flotante de opciones del propietario.
+    // No cambia de vista; la salida de Sheet/Configuración se maneja con ESC
+    // o con clic directo en el fondo de esas vistas.
     state.adminPanelOpen = false;
-    if ($('#viewSheet')?.classList.contains('active') || $('#viewSettings')?.classList.contains('active')) {
-      setView('catalog');
-    }
     applyAdminPanelState();
   }
 
