@@ -3805,3 +3805,27 @@ body.search-card-modal-open #activeProductCard.search-card-expanded .search-card
     border-radius:22px!important;
   }
 }
+
+/* v51 · card modal reducido 10% */
+html body.catalog-fit-mode.search-card-modal-open #activeProductCard.search-card-expanded,
+body.search-card-modal-open #activeProductCard.search-card-expanded{
+  width:min(84.6vw,1404px)!important;
+  max-width:min(84.6vw,1404px)!important;
+  max-height:81vh!important;
+}
+html body.catalog-fit-mode.search-card-modal-open .search-card-side-nav.left.visible,
+body.search-card-modal-open .search-card-side-nav.left.visible{
+  left:14px!important;
+}
+html body.catalog-fit-mode.search-card-modal-open .search-card-side-nav.right.visible,
+body.search-card-modal-open .search-card-side-nav.right.visible{
+  right:14px!important;
+}
+@media(max-width:1200px){
+  html body.catalog-fit-mode.search-card-modal-open #activeProductCard.search-card-expanded,
+  body.search-card-modal-open #activeProductCard.search-card-expanded{
+    width:min(90vw,1260px)!important;
+    max-width:min(90vw,1260px)!important;
+    max-height:80vh!important;
+  }
+}
