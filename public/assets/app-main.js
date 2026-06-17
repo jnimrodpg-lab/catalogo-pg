@@ -325,7 +325,7 @@
     }
     $$('.showroom-filter-rail [data-rail-action]').forEach(el => {
       const action = el.dataset.railAction || '';
-      el.classList.toggle('active', state.mainFiltersOpen && ['filters','brands','sizes','colors'].includes(action));
+      el.classList.toggle('active', state.mainFiltersOpen && ['filters','categories','brands','sizes','colors'].includes(action));
     });
   }
 
@@ -341,7 +341,7 @@
   }
 
   function handleRailAction(action) {
-    if (action === 'categories') return openCategoryBrowser();
+    if (action === 'categories') return focusFilterControl('filterCategory');
     if (action === 'brands') return focusFilterControl('filterBrand');
     if (action === 'sizes') return focusFilterControl('filterSize');
     if (action === 'colors') return focusFilterControl('filterColor');
