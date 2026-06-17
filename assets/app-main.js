@@ -163,6 +163,7 @@
       $('#btnAuth').classList.add('hidden');
       $('#btnGoSheet').classList.add('hidden');
       $('#btnShareViewer').classList.add('hidden');
+      $('#btnViewerLogout')?.classList.remove('visible');
       document.body.classList.add('viewer-mode');
       document.body.classList.remove('is-admin','admin-panel-open');
       state.adminPanelOpen = false;
@@ -178,6 +179,7 @@
     $('#btnShareViewer').classList.toggle('hidden', !admin);
     document.body.classList.toggle('viewer-mode', logged && !admin);
     document.body.classList.toggle('is-admin', admin);
+    $('#btnViewerLogout')?.classList.toggle('visible', logged && !admin && !state.publicMode);
     if (!admin) { state.adminPanelOpen = false; applyAdminPanelState(); }
     hydrateViewerTopbar();
     if (logged && !admin) setView('catalog');
@@ -236,6 +238,7 @@
     applyAdminPanelState();
     $('#btnGoSheet').addEventListener('click', () => { setView('sheet'); closeAdminPanel(); });
     $('#btnAuth').addEventListener('click', authAction);
+    $('#btnViewerLogout')?.addEventListener('click', authAction);
     $('#btnCloseAuth').addEventListener('click', () => $('#authModal').classList.remove('show'));
     $('#btnDoAuth').addEventListener('click', doAuth);
     $$('.auth-tab').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
