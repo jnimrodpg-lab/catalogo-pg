@@ -3829,3 +3829,22 @@ body.search-card-modal-open .search-card-side-nav.right.visible{
     max-height:80vh!important;
   }
 }
+
+/* v52 · reduce expanded modal card 10% so side navigation is visible */
+body.search-card-modal-open #activeProductCard.search-card-expanded{
+  width:min(67.5vw,1062px)!important;
+  max-width:67.5vw!important;
+  height:min(70.2vh,774px)!important;
+  max-height:70.2vh!important;
+}
+body.search-card-modal-open #activeProductCard.search-card-expanded .product-photo{
+  min-height:0!important;
+}
+@media (max-width: 980px){
+  body.search-card-modal-open #activeProductCard.search-card-expanded{
+    width:90vw!important;
+    max-width:90vw!important;
+    height:78vh!important;
+    max-height:78vh!important;
+  }
+}
