@@ -4654,3 +4654,21 @@ html body.catalog-fit-mode #paginationText{
     grid-template-columns: 98px minmax(0,1fr) !important;
   }
 }
+
+/* v66 filter rail category label + slightly wider filter bar */
+html body.catalog-fit-mode .showroom-filter-sidebar{
+  grid-template-columns: var(--cat-left-collapsed) minmax(246px, 1fr) !important;
+}
+html body.catalog-fit-mode .showroom-filter-rail .rail-item small{
+  font-size: 12px !important;
+  line-height: 1.1 !important;
+}
+html body.catalog-fit-mode .showroom-filter-card{
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+@media (max-width: 1500px){
+  html body.catalog-fit-mode .showroom-filter-sidebar{
+    grid-template-columns: var(--cat-left-collapsed) minmax(236px, 1fr) !important;
+  }
+}
