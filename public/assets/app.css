@@ -4793,3 +4793,28 @@ html body.catalog-fit-mode .model-one-list{
 .login-as-viewer #btnDoAuth{background:linear-gradient(135deg,#4fc385,#2d9468)!important;color:#fff!important;border-color:rgba(54,154,104,.35)!important;}
 #btnDoAuth:disabled{opacity:.72!important;cursor:wait!important;}
 body:not(.login-as-viewer) #btnDoAuth{background:linear-gradient(135deg,#d1a04a,#b87922)!important;color:#fff!important;border-color:rgba(184,121,34,.35)!important;}
+
+/* v72 · salida del visualizador dentro del panel de configuración */
+body.viewer-mode:not(.public-viewer) .sidebar.admin-config-panel .side-footer{
+  display:grid!important;
+  gap:12px!important;
+}
+body.viewer-mode:not(.public-viewer) .sidebar.admin-config-panel #btnAuth{
+  display:flex!important;
+  width:100%!important;
+  justify-content:center!important;
+  min-height:52px!important;
+  border-radius:18px!important;
+  background:linear-gradient(135deg,#fffaf4,#f1dfc5)!important;
+  border:1px solid rgba(184,121,34,.24)!important;
+  color:#6f471a!important;
+  font-weight:950!important;
+  box-shadow:0 14px 34px rgba(88,58,24,.16), inset 0 1px 0 rgba(255,255,255,.78)!important;
+}
+body.viewer-mode:not(.public-viewer) .sidebar.admin-config-panel #btnAuth::before{
+  content:'⎋';
+  margin-right:8px;
+}
+body.viewer-mode:not(.public-viewer) .sidebar.admin-config-panel #sessionPill{
+  text-align:center!important;
+}

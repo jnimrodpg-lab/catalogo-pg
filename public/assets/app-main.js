@@ -172,7 +172,7 @@
     const logged = !!state.auth;
     const admin = isAdmin();
     pill.textContent = logged ? `${state.auth.user} · ${admin ? 'admin' : 'viewer'}` : 'Sin sesión';
-    $('#btnAuth').textContent = logged ? 'Cerrar sesión' : 'Ingresar';
+    $('#btnAuth').textContent = logged ? (admin ? 'Cerrar sesión' : 'Salir del visualizador') : 'Ingresar';
     $('#adminNav').classList.toggle('hidden', !admin);
     $('#btnGoSheet').classList.toggle('hidden', !admin);
     $('#btnShareViewer').classList.toggle('hidden', !admin);
