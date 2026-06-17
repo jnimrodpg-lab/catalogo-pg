@@ -82,25 +82,6 @@ export async function onRequest(context) {
       }, 200, [makeSessionCookie(sid)]);
     }
 
-    if (path === '/viewer-login' && request.method === 'POST') {
-      const company = await first(env.DB.prepare('SELECT * FROM companies ORDER BY id ASC LIMIT 1'));
-      const companyId = Number(company?.id || 1);
-      const sid = await createSession(env.DB, {
-        user_id: 0,
-        username: 'viewer',
-        role: 'viewer',
-        company_id: companyId
-      });
-      return withJson({
-        ok: true,
-        user: 'viewer',
-        role: 'viewer',
-        company_name: company?.name || DEFAULT_COMPANY_NAME,
-        company_code: company?.code || DEFAULT_COMPANY_CODE,
-        build: BUILD_MARK
-      }, 200, [makeSessionCookie(sid)]);
-    }
-
     if (path === '/register' && request.method === 'POST') {
       const body = await readJson(request);
       const mode = String(body.mode || 'admin').trim().toLowerCase();

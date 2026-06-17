@@ -396,16 +396,12 @@
     };
     $('#authStatus').textContent = 'Validando...';
     try {
-      if (state.authMode !== 'register' && state.loginAccessMode === 'viewer') {
-        state.auth = await api('/viewer-login', { method:'POST', body: JSON.stringify({}) });
-        state.auth.role = 'viewer';
-      } else {
-        state.auth = await api(state.authMode === 'register' ? '/register' : '/login', { method:'POST', body: JSON.stringify(payload) });
-      }
+      state.auth = await api(state.authMode === 'register' ? '/register' : '/login', { method:'POST', body: JSON.stringify(payload) });
+      if (state.authMode !== 'register' && state.loginAccessMode === 'viewer') state.auth.role = 'viewer';
       $('#authModal').classList.remove('show');
       $('#authStatus').textContent = '';
       await loadBranches();
-      toast(state.loginAccessMode === 'viewer' ? 'Ingresaste como visualizador.' : 'Acceso correcto.');
+      toast('Acceso correcto.');
     } catch (err) {
       $('#authStatus').textContent = err.message;
     }
@@ -1198,7 +1194,9 @@
             <em class="group-open-label">Ver producto →</em>
           </div>
         </div>
-        <button class="group-card-arrow" type="button" aria-label="Ver producto">›</button>
+        <div><span class="metric-pill">${esc(variants)}</span><small>${esc(variants === 1 ? (val(p,'variante') || '1 variante') : 'variantes')}</small></div>
+        <div><span class="metric-pill">${esc(colors.length || '—')}</span><small>${esc(colors.slice(0,3).join(' · ') || 'colores')}</small></div>
+        <div><span class="metric-pill">${esc(sizes.length || '—')}</span><small>${esc(sizes.slice(0,4).join(' · ') || 'tallas')}</small></div>
       </div>`;
     }).join('');
     $$('.product-row', list).forEach(row => {
