@@ -3990,3 +3990,128 @@ html body:not(.catalog-fit-mode) #viewSettings .primary-btn{
   html body:not(.catalog-fit-mode) #viewSheet .setup-panel,
   html body:not(.catalog-fit-mode) #viewSettings .setup-panel{width:100%!important;max-height:calc(100vh - 24px)!important;padding:18px!important;}
 }
+
+
+/* v58 · engranaje permanente en Vincular Sheet / Configuración */
+body.catalog-fit-mode .sheet-settings-config-btn{
+  display:none!important;
+}
+body:not(.catalog-fit-mode) .sheet-settings-config-btn{
+  display:grid!important;
+  position:fixed!important;
+  top:24px!important;
+  right:24px!important;
+  z-index:1375!important;
+  width:58px!important;
+  height:58px!important;
+  border-radius:999px!important;
+  background:linear-gradient(145deg,#fdf7ec,#eadcc7)!important;
+  border:1px solid rgba(193,145,59,.32)!important;
+  color:#7b5523!important;
+  box-shadow:0 18px 42px rgba(99,75,43,.16),inset 0 1px 0 rgba(255,255,255,.75)!important;
+}
+body:not(.catalog-fit-mode) .sheet-settings-config-btn:hover{
+  transform:translateY(-1px)!important;
+  background:linear-gradient(145deg,#fffaf1,#e9d2a7)!important;
+  border-color:rgba(193,145,59,.55)!important;
+}
+body.admin-panel-open .sheet-settings-config-btn,
+body.viewer-mode.public-viewer .sheet-settings-config-btn,
+.sheet-settings-config-btn.hidden{
+  display:none!important;
+}
+@media(max-width:720px){
+  body:not(.catalog-fit-mode) .sheet-settings-config-btn{
+    top:14px!important;
+    right:14px!important;
+    width:50px!important;
+    height:50px!important;
+  }
+}
+
+/* v59 branding + left search layout */
+html body.catalog-fit-mode .product-client-stage.model-one-board{
+  grid-template-columns:minmax(320px,340px) minmax(0,1fr) minmax(360px,31vw)!important;
+  grid-template-areas:
+    "search main selected"
+    "filters main selected"!important;
+  align-items:start!important;
+}
+html body.catalog-fit-mode .showroom-main-column{
+  display:contents!important;
+}
+html body.catalog-fit-mode .client-search-shell.model-one-search.compact-inside-stage,
+html body.catalog-fit-mode .client-search-shell.simplified-search-shell.compact-inside-stage{
+  grid-area:search!important;
+  width:100%!important;
+  align-self:start!important;
+  margin:0!important;
+  background:linear-gradient(180deg,rgba(255,251,245,.98),rgba(247,239,228,.96))!important;
+  border:1px solid rgba(191,159,108,.24)!important;
+  box-shadow:0 18px 44px rgba(126,92,44,.12)!important;
+}
+html body.catalog-fit-mode .groups-panel{grid-area:main!important;min-height:calc(100vh - 172px)!important;}
+html body.catalog-fit-mode .showroom-filter-sidebar{
+  grid-area:filters!important;
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+}
+html body.catalog-fit-mode .selected-panel{grid-area:selected!important;}
+html body.catalog-fit-mode .showroom-filter-card label span{
+  color:#8f6330!important;
+  font-weight:900!important;
+  font-size:13px!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+}
+html body.catalog-fit-mode .showroom-filter-title strong{
+  color:#2f2116!important;
+  font-size:20px!important;
+  letter-spacing:.04em!important;
+}
+html body.catalog-fit-mode .showroom-filter-title span,
+html body.catalog-fit-mode .showroom-filter-card .muted{
+  color:#7d6240!important;
+}
+html body.catalog-fit-mode .showroom-filter-card label{
+  gap:8px!important;
+}
+.brand-settings-card{margin-bottom:18px!important;}
+.brand-settings-grid{align-items:end!important;}
+.brand-preview-row{display:flex;align-items:center;gap:14px;padding:14px 0 2px;}
+.brand-preview-copy{display:grid;gap:4px;}
+.brand-preview-copy strong{font-size:20px;color:#2f2116;}
+.brand-preview-copy span{font-size:13px;color:#7b6754;}
+.brand-mark,.brand-preview-mark,.brand-emblem-logo{
+  display:grid;place-items:center;overflow:hidden;
+}
+.brand-mark.has-logo,.brand-preview-mark.has-logo,.brand-emblem-logo.has-logo{
+  padding:0!important;
+}
+.brand-mark img,.brand-preview-mark img,.brand-emblem-logo img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+#catalogBrandEmblem{
+  width:42px!important;height:42px!important;border-radius:14px!important;
+  background:linear-gradient(135deg,#e4c18d,#d89ad7)!important;
+  color:#1f1620!important;flex:0 0 42px!important;
+}
+#brandMark,#storeLogoPreviewMark{background:linear-gradient(135deg,#e4c18d,#d89ad7)!important;color:#1f1620!important;}
+#storeLogoPreviewMark{width:62px;height:62px;font-size:24px;}
+@media (max-width: 1440px){
+  html body.catalog-fit-mode .product-client-stage.model-one-board{
+    grid-template-columns:minmax(300px,320px) minmax(0,1fr) minmax(330px,27vw)!important;
+  }
+}
+@media (max-width: 1180px){
+  html body.catalog-fit-mode .product-client-stage.model-one-board{
+    grid-template-columns:1fr!important;
+    grid-template-areas:
+      "search"
+      "filters"
+      "main"
+      "selected"!important;
+  }
+  html body.catalog-fit-mode .showroom-filter-sidebar{grid-template-columns:80px minmax(0,1fr)!important;}
+}

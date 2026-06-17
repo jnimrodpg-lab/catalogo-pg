@@ -7,14 +7,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./assets/app.css?v=v57-config-flow-fix" />
+  <link rel="stylesheet" href="./assets/app.css?v=v58-persistent-gear" />
 </head>
 <body>
   <div class="client-app" id="appRoot">
     <aside class="glass-panel sidebar admin-config-panel" id="adminConfigPanel" aria-label="Panel de configuración">
       <button class="sidebar-toggle" id="btnToggleSidebar" type="button" aria-label="Cerrar configuración" title="Cerrar configuración">×</button>
       <div class="brand-row">
-        <div class="brand-mark">C</div>
+        <div class="brand-mark" id="brandMark">C</div>
         <div>
           <strong id="brandName">Catálogo Visual</strong>
           <span id="brandSubtitle">Búsqueda por producto, SKU y ubicación</span>
@@ -46,6 +46,8 @@
     </aside>
 
     <div class="admin-panel-scrim" id="adminPanelScrim" aria-hidden="true"></div>
+
+    <button class="floating-config-btn sheet-settings-config-btn" id="btnOpenAdminPanelFloating" type="button" aria-label="Abrir configuración" title="Configuración">⚙</button>
 
     <main class="main-shell">
       <div class="viewer-topbar glass-panel" id="viewerTopbar">
@@ -100,7 +102,7 @@
           <div class="showroom-main-column">
             <div class="client-search-shell glass-panel model-one-search simplified-search-shell compact-inside-stage">
               <div class="search-client-head simplified showroom-brandbar">
-                <div class="showroom-brand-mini"><span class="brand-emblem">◇</span><strong>Premium Commerce</strong></div>
+                <div class="showroom-brand-mini"><span class="brand-emblem brand-emblem-logo" id="catalogBrandEmblem">◇</span><strong id="catalogBrandTitle">Premium Commerce</strong></div>
                 <div class="search-client-actions">
                   <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
                   <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
@@ -251,6 +253,26 @@
               <p>Mantiene solo lo necesario: empresa, sucursales, Google Sheet, productos y link público de consulta.</p>
             </div>
           </div>
+          <div class="soft-card brand-settings-card">
+            <h3>Identidad de la tienda</h3>
+            <p class="muted small" id="storeBrandHelper">Personaliza el nombre visible del catálogo y sube el logo de tu tienda.</p>
+            <div class="form-grid two brand-settings-grid">
+              <label>Nombre de la empresa / tienda<input id="storeDisplayName" placeholder="Ej. Premium Commerce" /></label>
+              <label>Logo de la tienda<input id="storeLogoFile" type="file" accept="image/*" /></label>
+            </div>
+            <div class="brand-preview-row">
+              <div class="brand-mark brand-preview-mark" id="storeLogoPreviewMark">C</div>
+              <div class="brand-preview-copy">
+                <strong id="storeBrandPreviewName">Premium Commerce</strong>
+                <span>Así se verá la identidad principal de tu catálogo.</span>
+              </div>
+            </div>
+            <div class="action-row">
+              <button class="primary-btn" id="btnSaveBranding" type="button">Guardar identidad</button>
+              <button class="ghost-btn" id="btnResetBranding" type="button">Restablecer</button>
+            </div>
+          </div>
+
           <div class="form-grid three">
             <label>Nombre de nueva sucursal<input id="newBranchName" placeholder="Ej. Lince, Tienda principal" /></label>
             <label>Tipo<input id="newBranchType" value="catálogo" /></label>
@@ -355,6 +377,6 @@
   </div>
 
   <div class="toast-stack" id="toastStack"></div>
-  <script src="./assets/app-main.js?v=v57-config-flow-fix"></script>
+  <script src="./assets/app-main.js?v=v58-persistent-gear"></script>
 </body>
 </html>

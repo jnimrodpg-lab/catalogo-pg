@@ -13,6 +13,11 @@
     stock:false, precio:false, request:true
   };
 
+  const DEFAULT_BRANDING_CONFIG = {
+    name:'Premium Commerce',
+    logo:''
+  };
+
   function loadClientConfig() {
     try { return { ...DEFAULT_UI_CONFIG, ...JSON.parse(localStorage.getItem('catalogoClientUiConfig') || '{}') }; }
     catch { return { ...DEFAULT_UI_CONFIG }; }
@@ -20,6 +25,15 @@
 
   function saveClientConfig() {
     localStorage.setItem('catalogoClientUiConfig', JSON.stringify(state.uiConfig || DEFAULT_UI_CONFIG));
+  }
+
+  function loadBrandingConfig() {
+    try { return { ...DEFAULT_BRANDING_CONFIG, ...JSON.parse(localStorage.getItem('catalogoBrandingConfig') || '{}') }; }
+    catch { return { ...DEFAULT_BRANDING_CONFIG }; }
+  }
+
+  function saveBrandingConfig() {
+    localStorage.setItem('catalogoBrandingConfig', JSON.stringify(state.branding || DEFAULT_BRANDING_CONFIG));
   }
 
   function loadRequestCart() {
@@ -51,6 +65,7 @@
     mapping: {},
     sidebarCollapsed: localStorage.getItem('catalogoSidebarCollapsed') === '1',
     uiConfig: loadClientConfig(),
+    branding: loadBrandingConfig(),
     requestItems: loadRequestCart(),
     adminPanelOpen: false,
     categoryAudience: 'all',
@@ -60,7 +75,7 @@
     categoryCache: {},
     categoryHydrating: false,
     categoryQuickFiltersOpen: false,
-    mainFiltersOpen: false,
+    mainFiltersOpen: true,
     loginAccessMode: 'admin',
     variantFilters: { size:'', color:'' }
   };
@@ -204,6 +219,7 @@
     }));
     $('#btnToggleSidebar')?.addEventListener('click', closeAdminPanel);
     $('#btnOpenAdminPanel')?.addEventListener('click', openAdminPanel);
+    $('#btnOpenAdminPanelFloating')?.addEventListener('click', e => { e.stopPropagation(); openAdminPanel(); });
     $('#adminPanelScrim')?.addEventListener('click', closeAdminPanel);
     ['viewSheet','viewSettings'].forEach(id => {
       const section = $(`#${id}`);
@@ -289,6 +305,7 @@
     });
     renderRequestCart();
     renderAppliedFilters();
+    bindBrandingControls();
   }
 
   function setMainFiltersOpen(open) {
@@ -412,8 +429,7 @@
       state.categoryBrowserProducts = [];
       renderBranches();
       await loadProducts();
-      const company = branch.name || 'Catálogo';
-      $('#brandName').textContent = company;
+      applyBranding();
     } catch (err) {
       renderEmptyState(err.message || 'No se pudo abrir el link público.');
     }
@@ -437,6 +453,7 @@
       $('#brandSubtitle').textContent = b.name || 'Catálogo';
     }
     hydrateViewerTopbar();
+    applyBranding();
     updateAdminChecklist();
   }
 
@@ -1483,6 +1500,92 @@
     if (title) title.textContent = b?.name || 'Catálogo de productos';
   }
 
+  function brandingInitial(name) {
+    return String(name || 'C').trim().charAt(0).toUpperCase() || 'C';
+  }
+
+  function paintBrandMark(el, name, logo) {
+    if (!el) return;
+    el.classList.toggle('has-logo', !!logo);
+    if (logo) {
+      el.innerHTML = `<img src="${logo}" alt="Logo de ${esc(name)}" />`;
+    } else {
+      el.textContent = brandingInitial(name);
+    }
+  }
+
+  function getBrandingName() {
+    const custom = String(state.branding?.name || '').trim();
+    return custom || getBranch()?.name || 'Catálogo Visual';
+  }
+
+  function applyBranding() {
+    const name = getBrandingName();
+    const subtitle = getBranch()?.name || 'Sucursal principal';
+    document.title = `${name} • Productos`;
+    ['brandName','catalogBrandTitle','storeBrandPreviewName'].forEach(id => {
+      const el = $('#' + id);
+      if (el) el.textContent = name;
+    });
+    const subtitleEl = $('#brandSubtitle');
+    if (subtitleEl) subtitleEl.textContent = subtitle;
+    const helper = $('#storeBrandHelper');
+    if (helper) helper.textContent = `Personaliza el nombre visible del catálogo y sube el logo de tu tienda. Ahora se mostrará como “${name}”.`;
+    const input = $('#storeDisplayName');
+    if (input && document.activeElement !== input) input.value = state.branding?.name || '';
+    paintBrandMark($('#brandMark'), name, state.branding?.logo || '');
+    paintBrandMark($('#catalogBrandEmblem'), name, state.branding?.logo || '');
+    paintBrandMark($('#storeLogoPreviewMark'), name, state.branding?.logo || '');
+  }
+
+  function bindBrandingControls() {
+    if (document.body.dataset.brandingBound === '1') {
+      applyBranding();
+      return;
+    }
+    document.body.dataset.brandingBound = '1';
+    const input = $('#storeDisplayName');
+    const file = $('#storeLogoFile');
+    const previewName = $('#storeBrandPreviewName');
+    if (input) {
+      input.value = state.branding?.name || '';
+      input.addEventListener('input', () => {
+        const liveName = input.value.trim() || getBranch()?.name || DEFAULT_BRANDING_CONFIG.name;
+        if (previewName) previewName.textContent = liveName;
+        paintBrandMark($('#storeLogoPreviewMark'), liveName, state.branding?.logo || '');
+      });
+    }
+    if (file) {
+      file.addEventListener('change', () => {
+        const picked = file.files && file.files[0];
+        if (!picked) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.branding.logo = String(reader.result || '');
+          const liveName = input?.value.trim() || getBranch()?.name || DEFAULT_BRANDING_CONFIG.name;
+          paintBrandMark($('#storeLogoPreviewMark'), liveName, state.branding.logo || '');
+          toast('Logo cargado. Guarda para aplicar.', 'ok');
+        };
+        reader.readAsDataURL(picked);
+      });
+    }
+    $('#btnSaveBranding')?.addEventListener('click', () => {
+      state.branding.name = input?.value.trim() || DEFAULT_BRANDING_CONFIG.name;
+      saveBrandingConfig();
+      applyBranding();
+      toast('Identidad de la tienda actualizada.');
+    });
+    $('#btnResetBranding')?.addEventListener('click', () => {
+      state.branding = { ...DEFAULT_BRANDING_CONFIG };
+      if (input) input.value = state.branding.name;
+      if (file) file.value = '';
+      saveBrandingConfig();
+      applyBranding();
+      toast('Identidad restablecida.');
+    });
+    applyBranding();
+  }
+
   function bindClientConfigControls() {
     const controls = $$('[data-config-field]');
     controls.forEach(input => {
@@ -1831,7 +1934,9 @@
   function applyAdminPanelState() {
     document.body.classList.toggle('admin-panel-open', !!state.adminPanelOpen);
     const btn = $('#btnOpenAdminPanel');
+    const floatingBtn = $('#btnOpenAdminPanelFloating');
     if (btn) btn.classList.toggle('hidden', state.publicMode);
+    if (floatingBtn) floatingBtn.classList.toggle('hidden', state.publicMode);
   }
 
   function openAdminPanel() {
