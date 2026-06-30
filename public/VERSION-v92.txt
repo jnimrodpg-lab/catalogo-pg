@@ -1,1 +1,0 @@
-v92 - ancho de abertura limitado por espesor de muro
