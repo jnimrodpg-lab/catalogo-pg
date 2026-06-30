@@ -1,0 +1,15 @@
+name = "catalogo-pg"
+compatibility_date = "2026-03-31"
+pages_build_output_dir = "public"
+
+[vars]
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
+DEFAULT_COMPANY_NAME = "Catálogo Visual"
+DEFAULT_COMPANY_CODE = "CAT-CF"
+DB_NAME = "catalogo-pg-db"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "catalogo-pg-db"
+database_id = "617b2188-448f-4474-9d92-e5a86957bbb0"
