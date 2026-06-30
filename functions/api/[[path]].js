@@ -1,4 +1,4 @@
-const BUILD_MARK = 'catalogo-v28-d1-product-rows';
+const BUILD_MARK = 'cloudflare-v16-layout-tools';
 
 const COOKIE_NAME = 'wms.sid';
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
@@ -32,8 +32,7 @@ export async function onRequest(context) {
     }
 
     if (path === '/drive-video' && request.method === 'GET') {
-      // Este proxy evita insertar iframes de Google Drive, que suelen ser bloqueados por CSP
-      // (frame-ancestors). Solo entrega archivos públicos de Drive por ID/URL.
+      await requireAuth(request, env.DB);
       return proxyGoogleDriveVideo(request, url);
     }
 
@@ -76,25 +75,6 @@ export async function onRequest(context) {
         ok: true,
         user: user.username,
         role: user.role,
-        company_name: company?.name || DEFAULT_COMPANY_NAME,
-        company_code: company?.code || DEFAULT_COMPANY_CODE,
-        build: BUILD_MARK
-      }, 200, [makeSessionCookie(sid)]);
-    }
-
-    if (path === '/viewer-login' && request.method === 'POST') {
-      const company = await first(env.DB.prepare('SELECT * FROM companies ORDER BY id ASC LIMIT 1'));
-      const companyId = Number(company?.id || 1);
-      const sid = await createSession(env.DB, {
-        user_id: 0,
-        username: 'viewer',
-        role: 'viewer',
-        company_id: companyId
-      });
-      return withJson({
-        ok: true,
-        user: 'viewer',
-        role: 'viewer',
         company_name: company?.name || DEFAULT_COMPANY_NAME,
         company_code: company?.code || DEFAULT_COMPANY_CODE,
         build: BUILD_MARK
@@ -457,17 +437,10 @@ export async function onRequest(context) {
         const sheet_name = has('sheet_name') ? String(body.sheet_name || 'Productos') : String(current.sheet_name || 'Productos');
         const source_type = has('source_type') ? String(body.source_type || 'google_sheet') : String(current.source_type || 'google_sheet');
         const sheet_map_rows = has('sheet_map_rows') ? body.sheet_map_rows : safeJsonParse(current.sheet_map_json, null);
-        const imported_products = has('imported_products') ? body.imported_products : null;
+        const imported_products = has('imported_products') ? body.imported_products : safeJsonParse(current.imported_products_json, []);
         const last_sheet_count = has('last_sheet_count') ? Number(body.last_sheet_count || 0) : Number(current.last_sheet_count || 0);
         const sheet_headers = has('sheet_headers') ? body.sheet_headers : safeJsonParse(current.sheet_headers_json, []);
         const sheet_header_index = has('sheet_header_index') ? Number(body.sheet_header_index || 0) : Number(current.sheet_header_index || 0);
-
-        let storedProductCount = Number(current.last_sheet_count || 0);
-        let previewProducts = safeJsonParse(current.imported_products_json, []);
-        if (Array.isArray(imported_products)) {
-          storedProductCount = await replaceBranchProducts(env.DB, branchId, imported_products);
-          previewProducts = imported_products.slice(0, 200);
-        }
 
         await env.DB.prepare(`
           UPDATE branch_sheet_config
@@ -479,14 +452,14 @@ export async function onRequest(context) {
           sheet_name,
           source_type,
           JSON.stringify(sheet_map_rows),
-          JSON.stringify(Array.isArray(previewProducts) ? previewProducts : []),
-          has('last_sheet_count') ? Number(last_sheet_count || storedProductCount || 0) : storedProductCount,
+          JSON.stringify(Array.isArray(imported_products) ? imported_products.slice(0, 50000) : []),
+          last_sheet_count,
           JSON.stringify(Array.isArray(sheet_headers) ? sheet_headers : []),
           sheet_header_index,
           branchId
         ).run();
 
-        return withJson({ ok: true, stored_products: storedProductCount, build: BUILD_MARK });
+        return withJson({ ok: true, build: BUILD_MARK });
       }
 
       if (tail === '/sheet-metadata' && request.method === 'POST') {
@@ -513,9 +486,7 @@ export async function onRequest(context) {
         const source_type = String(body.source_type != null ? body.source_type : (current.source_type || 'google_sheet'));
         const sheet_map_rows = Array.isArray(body.sheet_map_rows) ? body.sheet_map_rows : safeJsonParse(current.sheet_map_json, null);
         const imported_products = safeJsonParse(current.imported_products_json, []);
-        const product_count_row = await first(env.DB.prepare('SELECT COUNT(*) AS count FROM branch_products WHERE branch_id = ?').bind(branchId));
-        const product_count = Number(product_count_row?.count || 0);
-        const last_sheet_count = Number(current.last_sheet_count || product_count || (Array.isArray(imported_products) ? imported_products.length : 0) || 0);
+        const last_sheet_count = Number(current.last_sheet_count || (Array.isArray(imported_products) ? imported_products.length : 0) || 0);
         const sheet_headers = Array.isArray(body.sheet_headers) ? body.sheet_headers : safeJsonParse(current.sheet_headers_json, []);
         const sheet_header_index = Number(body.sheet_header_index != null ? body.sheet_header_index : (current.sheet_header_index || 0));
 
@@ -529,7 +500,7 @@ export async function onRequest(context) {
           sheet_name,
           source_type,
           JSON.stringify(sheet_map_rows),
-          JSON.stringify(Array.isArray(imported_products) ? imported_products.slice(0, 200) : []),
+          JSON.stringify(Array.isArray(imported_products) ? imported_products.slice(0, 50000) : []),
           last_sheet_count,
           JSON.stringify(Array.isArray(sheet_headers) ? sheet_headers : []),
           sheet_header_index,
@@ -552,7 +523,7 @@ export async function onRequest(context) {
         if (!branch) return withJson({ error: 'Sucursal no encontrada', build: BUILD_MARK }, 404);
 
         const page = Math.max(1, Number(url.searchParams.get('page') || 1));
-        const limit = Math.max(1, Math.min(5000, Number(url.searchParams.get('limit') || 120) || 120));
+        const limit = Math.max(1, Math.min(500, Number(url.searchParams.get('limit') || 120) || 120));
         const q = String(url.searchParams.get('q') || '').trim();
         const filters = {
           brand: url.searchParams.get('brand') || '',
@@ -562,28 +533,16 @@ export async function onRequest(context) {
           rack: url.searchParams.get('rack') || '',
           image_state: url.searchParams.get('image_state') || '',
           location_state: url.searchParams.get('location_state') || '',
-          stock_state: url.searchParams.get('stock_state') || '',
-          size: url.searchParams.get('size') || '',
-          color: url.searchParams.get('color') || ''
+          stock_state: url.searchParams.get('stock_state') || ''
         };
 
         const products = await getImportedProductsForBranch(env.DB, branchId);
         const filtered = filterImportedProducts(products, q, filters);
-        const groupBy = String(url.searchParams.get('group_by') || '').trim().toLowerCase();
-        let output = filtered;
-        let grouped = false;
-        let groupTotalProducts = filtered.length;
-
-        if (groupBy === 'name' || groupBy === 'nombre') {
-          output = groupProductsByName(filtered);
-          grouped = true;
-        }
-
-        const total = output.length;
+        const total = filtered.length;
         const totalPages = Math.max(1, Math.ceil(total / limit));
         const safePage = Math.min(page, totalPages);
         const start = (safePage - 1) * limit;
-        const items = output.slice(start, start + limit);
+        const items = filtered.slice(start, start + limit);
 
         return withJson({
           ok: true,
@@ -592,8 +551,6 @@ export async function onRequest(context) {
           page: safePage,
           limit,
           total_pages: totalPages,
-          grouped,
-          group_total_products: groupTotalProducts,
           facets: buildProductFacets(products),
           summary: buildProductSummary(products),
           build: BUILD_MARK
@@ -640,57 +597,6 @@ export async function onRequest(context) {
       }
     }
 
-
-    const publicProductsMatch = path.match(/^\/view-links\/([^/]+)\/products$/);
-    if (publicProductsMatch && request.method === 'GET') {
-      const token = decodeURIComponent(publicProductsMatch[1]);
-      const link = await first(
-        env.DB.prepare('SELECT * FROM viewer_links WHERE token = ? AND active = 1').bind(token)
-      );
-      if (!link) return withJson({ error: 'Link no encontrado o inactivo', build: BUILD_MARK }, 404);
-
-      const page = Math.max(1, Number(url.searchParams.get('page') || 1));
-      const limit = Math.max(1, Math.min(5000, Number(url.searchParams.get('limit') || 120) || 120));
-      const q = String(url.searchParams.get('q') || '').trim();
-      const filters = {
-        brand: url.searchParams.get('brand') || '',
-        category: url.searchParams.get('category') || '',
-        warehouse: url.searchParams.get('warehouse') || '',
-        image_state: url.searchParams.get('image_state') || '',
-        stock_state: url.searchParams.get('stock_state') || '',
-        size: url.searchParams.get('size') || '',
-        color: url.searchParams.get('color') || ''
-      };
-      const products = await getImportedProductsForBranch(env.DB, link.branch_id);
-      const filtered = filterImportedProducts(products, q, filters);
-      const groupBy = String(url.searchParams.get('group_by') || '').trim().toLowerCase();
-      let output = filtered;
-      let grouped = false;
-      let groupTotalProducts = filtered.length;
-      if (groupBy === 'name' || groupBy === 'nombre') {
-        output = groupProductsByName(filtered);
-        grouped = true;
-      }
-      const total = output.length;
-      const totalPages = Math.max(1, Math.ceil(total / limit));
-      const safePage = Math.min(page, totalPages);
-      const start = (safePage - 1) * limit;
-      const items = output.slice(start, start + limit);
-      return withJson({
-        ok: true,
-        items,
-        total,
-        page: safePage,
-        limit,
-        total_pages: totalPages,
-        grouped,
-        group_total_products: groupTotalProducts,
-        facets: buildProductFacets(products),
-        summary: buildProductSummary(products),
-        build: BUILD_MARK
-      });
-    }
-
     const tokenMatch = path.match(/^\/view-links\/([^/]+)$/);
     if (tokenMatch && request.method === 'GET') {
       const token = decodeURIComponent(tokenMatch[1]);
@@ -713,8 +619,7 @@ export async function onRequest(context) {
         `).bind(link.branch_id)
       );
 
-      const importedProducts = await getImportedProductsForBranch(env.DB, link.branch_id);
-      const previewProducts = importedProducts.slice(0, 200);
+      const importedProducts = safeJsonParse(sheet?.imported_products_json, []);
       return withJson({
         ok: true,
         branch,
@@ -729,10 +634,7 @@ export async function onRequest(context) {
         },
         sheet: {
           ...(sheet || { sheet_id: '', sheet_name: 'Productos', source_type: 'google_sheet' }),
-          imported_products: previewProducts,
-          product_count: importedProducts.length,
-          facets: buildProductFacets(importedProducts),
-          summary: buildProductSummary(importedProducts),
+          imported_products: importedProducts,
           last_sheet_count: Number(sheet?.last_sheet_count || importedProducts.length || 0),
           sheet_map_rows: safeJsonParse(sheet?.sheet_map_json, null),
           sheet_headers: safeJsonParse(sheet?.sheet_headers_json, []),
@@ -841,30 +743,6 @@ async function ensureSchema(db, env) {
       sheet_headers_json TEXT,
       sheet_header_index INTEGER NOT NULL DEFAULT 0
     )`),
-
-    db.prepare(`CREATE TABLE IF NOT EXISTS branch_products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      branch_id INTEGER NOT NULL,
-      row_index INTEGER NOT NULL,
-      product_json TEXT NOT NULL,
-      search_text TEXT,
-      marca TEXT,
-      categoria TEXT,
-      almacen TEXT,
-      talla TEXT,
-      color TEXT,
-      has_image INTEGER NOT NULL DEFAULT 0,
-      has_location INTEGER NOT NULL DEFAULT 0,
-      has_stock INTEGER NOT NULL DEFAULT 0,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(branch_id, row_index)
-    )`),
-
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_branch_products_branch ON branch_products(branch_id)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_branch_products_marca ON branch_products(branch_id, marca)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_branch_products_categoria ON branch_products(branch_id, categoria)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_branch_products_talla ON branch_products(branch_id, talla)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_branch_products_color ON branch_products(branch_id, color)`),
 
     db.prepare(`CREATE TABLE IF NOT EXISTS branch_layouts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1652,50 +1530,11 @@ async function getSheetRowsPayload(id, sheet, limit = 200, headerOnly = false) {
 
 
 async function getImportedProductsForBranch(db, branchId) {
-  const rows = await all(
-    db.prepare('SELECT product_json FROM branch_products WHERE branch_id = ? ORDER BY row_index ASC').bind(branchId)
-  );
-  if (rows.length) {
-    return rows.map(row => safeJsonParse(row.product_json, null)).filter(Boolean);
-  }
   const row = await first(
     db.prepare('SELECT imported_products_json FROM branch_sheet_config WHERE branch_id = ?').bind(branchId)
   );
   const products = safeJsonParse(row?.imported_products_json, []);
   return Array.isArray(products) ? products : [];
-}
-
-async function replaceBranchProducts(db, branchId, products) {
-  const list = Array.isArray(products) ? products : [];
-  await db.prepare('DELETE FROM branch_products WHERE branch_id = ?').bind(branchId).run();
-  const stmt = db.prepare(`
-    INSERT INTO branch_products (
-      branch_id, row_index, product_json, search_text, marca, categoria, almacen, talla, color,
-      has_image, has_location, has_stock, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `);
-  const chunkSize = 250;
-  for (let offset = 0; offset < list.length; offset += chunkSize) {
-    const chunk = list.slice(offset, offset + chunkSize).map((product, idx) => {
-      const rowIndex = offset + idx;
-      return stmt.bind(
-        branchId,
-        rowIndex,
-        JSON.stringify(product || {}),
-        productSearchHaystack(product || {}),
-        productValue(product, ['marca', 'brand']),
-        productValue(product, ['categoria', 'categoría', 'category']),
-        productValue(product, ['almacen', 'almacén', 'warehouse']),
-        productValue(product, ['talla', 'Talla', 'size']),
-        productValue(product, ['color', 'Color']),
-        productHasImage(product) ? 1 : 0,
-        productHasLocation(product) ? 1 : 0,
-        productHasStock(product) ? 1 : 0
-      );
-    });
-    if (chunk.length) await db.batch(chunk);
-  }
-  return list.length;
 }
 
 function normalizeSearchText(value) {
@@ -1734,8 +1573,22 @@ function productSearchHaystack(product) {
   ].join(' '));
 }
 
+function isImageHeaderName(header) {
+  const key = String(header || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+  return /^(imagen|image|foto|fotografia|img)(\d+)?$/.test(key)
+    || /^(urlimagen|imagenurl|linkimagen|enlaceimagen)(\d+)?$/.test(key)
+    || /^(imageurl|urlimage|linkimage)(\d+)?$/.test(key);
+}
+
 function productHasImage(product) {
-  return !!productValue(product, ['imagen', 'image', 'foto', 'imagen2', 'image2', 'foto2']);
+  if (productValue(product, ['imagen', 'imagen1', 'image', 'image1', 'foto', 'foto1', 'imagen2', 'image2', 'foto2', 'imagen3', 'image3', 'foto3', 'imagen4', 'image4', 'foto4'])) return true;
+  if (Array.isArray(product?.imagenes) && product.imagenes.some((v) => String(v || '').trim())) return true;
+  const raw = product && typeof product._raw === 'object' ? product._raw : null;
+  return !!(raw && Object.entries(raw).some(([header, value]) => isImageHeaderName(header) && String(value || '').trim()));
 }
 
 function productHasLocation(product) {
@@ -1747,62 +1600,6 @@ function productHasStock(product) {
   if (!raw) return false;
   const numeric = Number(String(raw).replace(',', '.').replace(/[^0-9.-]/g, ''));
   return Number.isFinite(numeric) ? numeric > 0 : true;
-}
-
-
-function productGroupIdentity(product) {
-  const name = productValue(product, ['nombre', 'Nombre', 'name', 'producto']).trim();
-  const brand = productValue(product, ['marca', 'brand']).trim();
-  const base = name || productValue(product, ['sku', 'Sku', 'SKU', 'barras', 'barcode']).trim() || 'Sin nombre';
-  return `${normalizeSearchText(base)}¦${normalizeSearchText(brand)}`;
-}
-
-function uniqueNonEmpty(values) {
-  const seen = new Map();
-  for (const value of values || []) {
-    const clean = String(value || '').trim();
-    if (!clean) continue;
-    const key = normalizeSearchText(clean);
-    if (!seen.has(key)) seen.set(key, clean);
-  }
-  return [...seen.values()];
-}
-
-function groupProductsByName(products) {
-  const groups = new Map();
-  for (const product of products || []) {
-    const key = productGroupIdentity(product);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(product);
-  }
-
-  return [...groups.entries()].map(([key, items]) => {
-    const preferred = items.find(productHasImage) || items[0] || {};
-    const sizes = uniqueNonEmpty(items.map(p => productValue(p, ['talla', 'Talla', 'size'])));
-    const colors = uniqueNonEmpty(items.map(p => productValue(p, ['color', 'Color'])));
-    const locations = uniqueNonEmpty(items.map(p => productValue(p, ['ubicacion', 'ubicación', 'location']) || [
-      productValue(p, ['zona', 'zone']),
-      productValue(p, ['estante', 'rack']),
-      productValue(p, ['nivel']),
-      productValue(p, ['slot'])
-    ].filter(Boolean).join('-')));
-    const warehouses = uniqueNonEmpty(items.map(p => productValue(p, ['almacen', 'almacén', 'warehouse'])));
-    const skus = uniqueNonEmpty(items.map(p => productValue(p, ['sku', 'Sku', 'SKU']) || productValue(p, ['barras', 'barcode'])));
-
-    return {
-      ...preferred,
-      _grouped: true,
-      _groupKey: key,
-      _groupName: productValue(preferred, ['nombre', 'Nombre', 'name', 'producto']) || 'Sin nombre',
-      _groupItems: items,
-      _variantCount: items.length,
-      _sizeOptions: sizes,
-      _colorOptions: colors,
-      _locationOptions: locations,
-      _warehouseOptions: warehouses,
-      _skuOptions: skus
-    };
-  }).sort((a, b) => String(a._groupName || '').localeCompare(String(b._groupName || ''), 'es'));
 }
 
 function filterImportedProducts(products, q, filters = {}) {
@@ -1827,12 +1624,6 @@ function filterImportedProducts(products, q, filters = {}) {
 
     const rack = normalizeSearchText(filters.rack);
     if (rack && normalizeSearchText(productValue(product, ['rack', 'estante', 'rackStore', 'estanteStore'])) !== rack) return false;
-
-    const size = normalizeSearchText(filters.size);
-    if (size && normalizeSearchText(productValue(product, ['talla', 'Talla', 'size'])) !== size) return false;
-
-    const color = normalizeSearchText(filters.color);
-    if (color && normalizeSearchText(productValue(product, ['color', 'Color'])) !== color) return false;
 
     const imageState = String(filters.image_state || '').trim();
     if (imageState === 'with' && !productHasImage(product)) return false;

@@ -1,0 +1,1 @@
+v97 - botones sin rebote de autofit/zoom

@@ -91,26 +91,3 @@ CREATE TABLE IF NOT EXISTS sessions_store (
   expires_at INTEGER NOT NULL,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TABLE IF NOT EXISTS branch_products (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  branch_id INTEGER NOT NULL,
-  row_index INTEGER NOT NULL,
-  product_json TEXT NOT NULL,
-  search_text TEXT,
-  marca TEXT,
-  categoria TEXT,
-  almacen TEXT,
-  talla TEXT,
-  color TEXT,
-  has_image INTEGER NOT NULL DEFAULT 0,
-  has_location INTEGER NOT NULL DEFAULT 0,
-  has_stock INTEGER NOT NULL DEFAULT 0,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(branch_id, row_index)
-);
-CREATE INDEX IF NOT EXISTS idx_branch_products_branch ON branch_products(branch_id);
-CREATE INDEX IF NOT EXISTS idx_branch_products_marca ON branch_products(branch_id, marca);
-CREATE INDEX IF NOT EXISTS idx_branch_products_categoria ON branch_products(branch_id, categoria);
-CREATE INDEX IF NOT EXISTS idx_branch_products_talla ON branch_products(branch_id, talla);
-CREATE INDEX IF NOT EXISTS idx_branch_products_color ON branch_products(branch_id, color);

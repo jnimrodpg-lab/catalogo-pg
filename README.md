@@ -1,86 +1,64 @@
-# Catálogo Visual Cliente · v4 Modelo 1
+WMS Industrial v84
 
-App Cloudflare Pages + Functions + D1 para consulta de productos desde Google Sheets.
-
-## Cambios v4
-- Interfaz adaptada al Modelo 1 de búsqueda.
-- Buscador simple y visible para cliente.
-- Resultados agrupados por nombre de producto/marca.
-- Lista con miniatura, variantes, colores y tallas.
-- Panel derecho de producto seleccionado dentro del modo búsqueda.
-- Click en producto o en `Abrir visor` para abrir card expandida.
-- Modo Admin conserva edición, vinculación Sheet, importación y generación de link cliente.
-- Modo Viewer queda solo lectura: buscar, seleccionar y visualizar productos.
-
-## Cloudflare Pages
-- Build command: vacío
-- Build output directory: `public`
-- D1 binding: `DB`
+Mejoras aplicadas en vanos:
+- Vanos representados como hueco real en 3D, sin sólido fantasma.
+- En layout 2D la abertura queda embebida en el muro y el muro se dibuja con corte real.
+- Selección y movimiento del vano mejorados con hit area sobre la abertura.
+- Inspector actualizado con ancho, alto, alféizar, profundidad y posición.
+- ZIP limpio con solo archivos necesarios de la app.
 
 
-V6
-- Corrige jerarquía visual del visor: la card del producto seleccionado queda al frente y las tarjetas Anterior / Siguiente quedan detrás.
+Actualización v89 FORCE:
+- Esta versión parte del ZIP v84 que seguía cargando el modelo antiguo con rombos.
+- Reemplacé directamente el renderer viejo de puertas en assets/app-main.runtimefix.js.
+- Mantengo los nombres antiguos app-main.runtimefix.js/app.css y también agrego copias v89 para evitar que se cargue otra versión.
+- Las puertas ahora se dibujan como panel rectangular técnico del modelo imagen 2.
+
+Actualización v90:
+- Corrección forzada de puertas: el renderer ya no debe mostrar el modelo delgado con rombos.
+- Botón visible “Guardar layout” agregado en la barra superior y como botón flotante dentro del canvas.
+- Badge visible: “v90 puertas modelo 2” para confirmar que se cargó el ZIP correcto.
+- Solo quedan app-main.runtimefix.js y app.css para evitar que se cargue un asset duplicado.
 
 
-V7
-- Corrige de forma forzada la jerarquía del visor: la card principal se monta temporalmente en el body y usa z-index superior al overlay y a las cards Anterior/Siguiente.
-- Verificado con `node --check` en `public/assets/app-main.js`.
-
-V10
-- Ajusta proporción del visor usando como referencia el ZIP v14 proporcionado.
-- Imagen/video ocupa todo el alto del área izquierda del card.
-- Panel de información queda compacto y sin scroll interno en escritorio.
-- Mejora contraste y lectura de chips de color.
+Actualización v91 - auditoría completa:
+- Falla encontrada: wrangler.toml publica desde public/, pero el ZIP no incluía carpeta public/. En Cloudflare podía no desplegar los cambios reales.
+- Se agregó public/ con index, assets y _redirects, manteniendo también archivos en raíz para apertura local.
+- Se eliminó la representación vieja tipo línea/rombos de los vanos y se fuerza el render rectangular modelo imagen 2 para todos los vanos.
+- Se reemplazaron los rombos de aristas por círculos para que no parezcan puertas antiguas.
+- Botón Guardar layout visible en barra superior y flotante.
+- Badge visible v91 puertas modelo 2 para validar la versión cargada.
 
 
-V12
-- Ajusta el visor para acercarlo al diseño de referencia: card 16:9, media full-bleed y panel derecho glass overlay interno.
-
-## V14 UX/UI
-- Se separa mejor la experiencia Admin vs Viewer.
-- Viewer público/cliente abre sin sidebar administrativo, con topbar limpia y buscador principal.
-- Resultados agrupados por producto con CTA visual "Ver producto".
-- Configuración de propietario para elegir qué campos aparecen en la card del cliente.
-- Botón WhatsApp opcional para compartir producto.
-- Checklist de publicación: sucursal, Sheet, productos y link cliente.
+Actualización v92:
+- El ancho visual de la abertura ahora usa el espesor del muro como máximo.
+- El ancho visual mínimo es la mitad del espesor del muro.
+- La cota superior del vano muestra ese ancho visual corregido.
 
 
-V15
-- Limpia el panel de información del visor: oculta ubicación/almacén para cliente, elimina botones redundantes y deja un único CTA “Solicitar ahora”.
-- Ajusta tamaños, espaciados y distribución para evitar que tallas, colores y botones se monten.
-
-V17
-- Agrega flujo de solicitud/mini carrito para clientes.
-- Reemplaza el CTA principal por “Agregar a solicitud” con estado “Agregado ✓”.
-- Agrega panel flotante para revisar, quitar, copiar y enviar la solicitud.
-- Limpia la vista viewer con resultados tipo cards compactas y sin campos internos como ubicación/almacén.
-- Mantiene configuración de campos visibles para propietario y comportamiento solo lectura para viewer.
+Actualización v93:
+- La puerta ahora se alinea a los extremos reales de la pared usando las caras del muro ya dibujadas.
+- Ya no debe sobresalir por fuera del espesor visible del muro.
+- El ancho visual y la cota superior siguen limitados por el espesor del muro.
 
 
-V19
-- Ajusta offset del panel de información del visor a 6px arriba, abajo y derecha.
-- Oculta etiqueta Producto y texto de familia agrupada.
-- Reubica botón de cierre visualmente dentro del panel de información.
+Actualización v94:
+- La puerta ahora toma como centro el centro real del muro.
+- En muros automáticos, el centro se calcula desde la línea base más la mitad del espesor.
+- Ya no debe quedar corrida por fuera del muro.
 
-## v43 fix
-Esta versión sincroniza los cambios Champagne Luxury también dentro de /public, que es la carpeta usada por Cloudflare Pages. Incluye:
-- Paleta Champagne Luxury aplicada.
-- Botón "Buscar por categoría" en la misma fila del buscador.
-- Opción "Categorías" removida de la barra lateral izquierda.
-- Filtro de categoría oculto del panel lateral, manteniendo compatibilidad interna.
+Actualización v95:
+- El panel derecho de edición de layout conserva su scroll al cambiar propiedades.
+- La pantalla activa se guarda en localStorage para no volver a Empresa/Admin al cambiar o recargar.
+- El campo Ancho del vano/puerta ahora cambia la dimensión visible de la puerta sobre el muro.
+- Se mantiene el ancho transversal de la abertura limitado por el espesor del muro.
 
+Actualización v96:
+- El zoom ya no reconstruye toda la vista de layout en cada paso.
+- El zoom actualiza solo el viewport SVG, evitando el rebote de acercar/alejar.
+- Se bloqueó el auto-fit durante unos milisegundos después de cada zoom para que no compita con el zoom manual.
 
-Actualización v53:
-- Se agregó el selector de Categoría dentro del panel lateral de Filtros, justo debajo del encabezado y manteniendo también el botón Categoría junto al buscador.
-
-
-Actualización v58:
-- Se agregó un botón flotante de engranaje visible en Vincular Sheet y Configuración.
-- El engranaje permite reabrir el panel de opciones sin recargar ni volver al catálogo.
-- Se mantiene oculto en vista catálogo para no duplicar el botón de Ajustes del lateral.
-
-
-Actualización v67:
-- Viewer puede entrar sin usuario/contraseña desde el selector de acceso.
-- Lista central en 2 columnas de productos.
-- Se ocultó el contador de variantes dentro de cada card/listado.
+Actualización v97:
+- Se bloqueó el auto-fit al hacer clic en botones del layout.
+- Los botones de zoom ya no reconstruyen la pantalla ni disparan reajuste automático.
+- La vista se ajusta automáticamente solo al primer render o al usar el botón de ajustar vista.

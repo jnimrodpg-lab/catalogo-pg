@@ -1,0 +1,1 @@
+v95 - fixes panel derecho, pantalla activa y ancho de puerta

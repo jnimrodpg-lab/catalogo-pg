@@ -3,381 +3,266 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catálogo Visual • Productos</title>
+  <title>WMS Control • PRO v2</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./assets/app.css?v=v58-persistent-gear" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/app.css?v=wms-v97-buttons-no-bounce" />
 </head>
 <body>
-  <div class="client-app" id="appRoot">
-    <aside class="glass-panel sidebar admin-config-panel" id="adminConfigPanel" aria-label="Panel de configuración">
-      <button class="sidebar-toggle" id="btnToggleSidebar" type="button" aria-label="Cerrar configuración" title="Cerrar configuración">×</button>
-      <div class="brand-row">
-        <div class="brand-mark" id="brandMark">C</div>
-        <div>
-          <strong id="brandName">Catálogo Visual</strong>
-          <span id="brandSubtitle">Búsqueda por producto, SKU y ubicación</span>
+  <div class="app" id="appRoot">
+    <aside class="panel sidebar">
+      <button class="collapse-btn" id="toggleSidebar">❮</button>
+      <div class="sidebar-top">
+        <div class="brand-box">W</div>
+        <div class="brand-text">
+          <b>WMS Industrial</b>
+          <span class="muted tiny">Ubicación visual de productos</span>
         </div>
       </div>
-
-      <div class="branch-box" id="branchBox">
-        <label>Sucursal / catálogo</label>
-        <select id="branchSelect"></select>
-        <button class="mini-btn" id="btnReloadProducts" type="button">Actualizar productos</button>
+      <div class="sidebar-body">
+        <div class="menu-section">
+          <div class="menu-title">⚙ <span>Administrador</span></div>
+          <div class="menu-items">
+            <div class="menu-item" data-screen="admin" data-admin-only="1">🏢 <span>Empresa</span></div>
+            <div class="menu-item active" data-screen="sheet" data-admin-only="1">🔗 <span>Vincular Sheet</span></div>
+            <div class="menu-item" data-screen="layout" data-admin-only="1">🗺 <span>Edición de Layout</span></div>
+            <div class="menu-item" data-screen="racks" data-admin-only="1">🧱 <span>Edición de Rack</span></div>
+            <div class="menu-item" data-screen="dashboard" data-admin-only="1">📊 <span>Salud / Dashboard</span></div>
+          </div>
+        </div>
+        <div class="menu-section">
+          <div class="menu-title">👁 <span>Viewer</span></div>
+          <div id="viewerBranchMenu" class="menu-items"></div>
+        </div>
       </div>
-
-      <nav class="side-nav" id="adminNav">
-        <button class="nav-item active" data-view="catalog" type="button">🛍️ Catálogo cliente</button>
-        <button class="nav-item" data-view="sheet" type="button">🔗 Vincular Sheet</button>
-        <button class="nav-item" data-view="settings" type="button">⚙️ Configuración</button>
-      </nav>
-
-      <div class="sidebar-stats">
-        <div><span id="statTotal">0</span><small>Productos</small></div>
-        <div><span id="statImages">0</span><small>Con imagen</small></div>
-        <div><span id="statStock">0</span><small>Con stock</small></div>
-      </div>
-
-      <div class="side-footer">
-        <div class="session-pill" id="sessionPill">Sin sesión</div>
-        <button class="ghost-btn" id="btnAuth" type="button">Ingresar admin</button>
+      <div class="sidebar-foot">
+        <div class="theme-switch-wrap">
+          <label class="theme-switch" title="Cambiar entre modo oscuro y modo día">
+            <input type="checkbox" class="theme-switch__checkbox" id="toggleThemeCheckbox" aria-label="Cambiar tema">
+            <div class="theme-switch__container">
+              <div class="theme-switch__clouds"></div>
+              <div class="theme-switch__stars-container">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 55" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M135.831 3.00688C135.055 3.85027 134.111 4.29946 133 4.35447C134.111 4.40947 135.055 4.85867 135.831 5.71123C136.607 6.55462 136.996 7.56303 136.996 8.72727C136.996 7.95722 137.172 7.25134 137.525 6.59129C137.886 5.93124 138.372 5.39954 138.98 5.00535C139.598 4.60199 140.268 4.39114 141 4.35447C139.88 4.2903 138.936 3.85027 138.16 3.00688C137.384 2.16348 136.996 1.16425 136.996 0C136.996 1.16425 136.607 2.16348 135.831 3.00688ZM31 23.3545C32.1114 23.2995 33.0551 22.8503 33.8313 22.0069C34.6075 21.1635 34.9956 20.1642 34.9956 19C34.9956 20.1642 35.3837 21.1635 36.1599 22.0069C36.9361 22.8503 37.8798 23.2903 39 23.3545C38.2679 23.3911 37.5976 23.602 36.9802 24.0053C36.3716 24.3995 35.8864 24.9312 35.5248 25.5913C35.172 26.2513 34.9956 26.9572 34.9956 27.7273C34.9956 26.563 34.6075 25.5546 33.8313 24.7112C33.0551 23.8587 32.1114 23.4095 31 23.3545ZM0 36.3545C1.11136 36.2995 2.05513 35.8503 2.83131 35.0069C3.6075 34.1635 3.99559 33.1642 3.99559 32C3.99559 33.1642 4.38368 34.1635 5.15987 35.0069C5.93605 35.8503 6.87982 36.2903 8 36.3545C7.26792 36.3911 6.59757 36.602 5.98015 37.0053C5.37155 37.3995 4.88644 37.9312 4.52481 38.5913C4.172 39.2513 3.99559 39.9572 3.99559 40.7273C3.99559 39.563 3.6075 38.5546 2.83131 37.7112C2.05513 36.8587 1.11136 36.4095 0 36.3545ZM56.8313 24.0069C56.0551 24.8503 55.1114 25.2995 54 25.3545C55.1114 25.4095 56.0551 25.8587 56.8313 26.7112C57.6075 27.5546 57.9956 28.563 57.9956 29.7273C57.9956 28.9572 58.172 28.2513 58.5248 27.5913C58.8864 26.9312 59.3716 26.3995 59.9802 26.0053C60.5976 25.602 61.2679 25.3911 62 25.3545C60.8798 25.2903 59.9361 24.8503 59.1599 24.0069C58.3837 23.1635 57.9956 22.1642 57.9956 21C57.9956 22.1642 57.6075 23.1635 56.8313 24.0069ZM81 25.3545C82.1114 25.2995 83.0551 24.8503 83.8313 24.0069C84.6075 23.1635 84.9956 22.1642 84.9956 21C84.9956 22.1642 85.3837 23.1635 86.1599 24.0069C86.9361 24.8503 87.8798 25.2903 89 25.3545C88.2679 25.3911 87.5976 25.602 86.9802 26.0053C86.3716 26.3995 85.8864 26.9312 85.5248 27.5913C85.172 28.2513 84.9956 28.9572 84.9956 29.7273C84.9956 28.563 84.6075 27.5546 83.8313 26.7112C83.0551 25.8587 82.1114 25.4095 81 25.3545ZM136 36.3545C137.111 36.2995 138.055 35.8503 138.831 35.0069C139.607 34.1635 139.996 33.1642 139.996 32C139.996 33.1642 140.384 34.1635 141.16 35.0069C141.936 35.8503 142.88 36.2903 144 36.3545C143.268 36.3911 142.598 36.602 141.98 37.0053C141.372 37.3995 140.886 37.9312 140.525 38.5913C140.172 39.2513 139.996 39.9572 139.996 40.7273C139.996 39.563 139.607 38.5546 138.831 37.7112C138.055 36.8587 137.111 36.4095 136 36.3545ZM101.831 49.0069C101.055 49.8503 100.111 50.2995 99 50.3545C100.111 50.4095 101.055 50.8587 101.831 51.7112C102.607 52.5546 102.996 53.563 102.996 54.7273C102.996 53.9572 103.172 53.2513 103.525 52.5913C103.886 51.9312 104.372 51.3995 104.98 51.0053C105.598 50.602 106.268 50.3911 107 50.3545C105.88 50.2903 104.936 49.8503 104.16 49.0069C103.384 48.1635 102.996 47.1642 102.996 46C102.996 47.1642 102.607 48.1635 101.831 49.0069Z" fill="currentColor"></path></svg>
+              </div>
+              <div class="theme-switch__circle-container"><div class="theme-switch__sun-moon-container"><div class="theme-switch__moon"><div class="theme-switch__spot"></div><div class="theme-switch__spot"></div><div class="theme-switch__spot"></div></div></div></div>
+            </div>
+          </label>
+        </div>
+        <div class="chip"><span class="sidebar-chip-label">Estado</span> <span class="dot green"></span> <b style="color:#83f9a8">Online</b></div>
+        <button class="auth-pill" id="btnAuthAction" type="button">Iniciar sesión</button>
       </div>
     </aside>
 
-    <div class="admin-panel-scrim" id="adminPanelScrim" aria-hidden="true"></div>
-
-    <button class="floating-config-btn sheet-settings-config-btn" id="btnOpenAdminPanelFloating" type="button" aria-label="Abrir configuración" title="Configuración">⚙</button>
-
-    <main class="main-shell">
-      <div class="viewer-topbar glass-panel" id="viewerTopbar">
+    <section class="panel search-panel">
+      <div id="searchBranchHost" class="search-branch-host"></div>
+      <div class="panel-header">
         <div>
-          <div class="eyebrow">Vista cliente</div>
-          <strong>Catálogo de productos</strong>
-          <span>Busca, revisa variantes y elige el producto que quieres.</span>
+          <h2>Productos</h2>
+          <div class="muted tiny">Busca un producto y visualiza exactamente dónde está ubicado</div>
         </div>
-        <select id="viewerBranchSelect" aria-label="Sucursal del catálogo"></select>
+        <div class="search-header-actions">
+          <span class="chip" id="countProductsChip"><span id="countProducts">0</span> productos</span>
+          <button class="seg-btn" id="toggleGroupProducts">Agrupar familias</button>
+        </div>
       </div>
-
-      <header class="hero glass-panel">
-        <div>
-          <div class="eyebrow">Consulta para cliente</div>
-          <h1>Encuentra tu producto en segundos</h1>
-          <p>Busca por SKU, nombre, variante, marca, talla, color, ubicación o almacén. Sin mapas ni racks: directo a la card.</p>
-        </div>
-        <div class="hero-actions">
-          <button class="ghost-btn" id="btnShareViewer" type="button">Generar link cliente</button>
-          <button class="primary-btn" id="btnGoSheet" type="button">Vincular Sheet</button>
-        </div>
-      </header>
-
-      <section class="catalog-view view active" id="viewCatalog">
-        <div class="product-client-stage glass-panel model-one-board">
-          <aside class="showroom-filter-sidebar">
-            <div class="showroom-filter-rail" aria-label="Accesos de filtros">
-              <button class="rail-item active" type="button" data-rail-action="filters"><span>⎇</span><small>Filtros</small></button>
-              <button class="rail-item" type="button" data-rail-action="categories"><span>▦</span><small>Categoria</small></button>
-              <button class="rail-item" type="button" data-rail-action="brands"><span>♡</span><small>Marcas</small></button>
-              <button class="rail-item" type="button" data-rail-action="sizes"><span>△</span><small>Tallas</small></button>
-              <button class="rail-item" type="button" data-rail-action="colors"><span>◌</span><small>Colores</small></button>
-              <button class="rail-item danger" type="button" data-rail-action="clear"><span>⌫</span><small>Limpiar</small></button>
-              <button class="rail-item rail-settings-btn" id="btnOpenAdminPanel" type="button" aria-label="Abrir configuración" title="Configuración del propietario"><span>⚙</span><small>Ajustes</small></button>
-            </div>
-            <div class="showroom-filter-card" id="mainFilterPanel" aria-hidden="false">
-              <div class="showroom-filter-title">
-                <div><strong>Filtros</strong><span>Refina categoría, marca, talla y color.</span></div>
-                <button class="showroom-filter-x" id="btnCloseSidebarFilters" type="button" aria-expanded="true">×</button>
-              </div>
-              <label><span>Categoría</span><select id="filterCategory"><option value="">Todas las categorías</option></select></label>
-              <label><span>Marca</span><select id="filterBrand"><option value="">Todas las marcas</option></select></label>
-              <label><span>Talla</span><select id="filterSize"><option value="">Todas las tallas</option></select></label>
-              <label><span>Color</span><select id="filterColor"><option value="">Todos los colores</option></select></label>
-              <button class="scan-btn filter-result-btn" type="button" id="btnSidebarResult">Ver resultados</button>
-              <button class="ghost-btn danger-soft" id="btnDisableFilters" type="button">Desactivar filtros</button>
-              <button class="ghost-btn" id="btnHiddenClearFilters" type="button">Limpiar filtros</button>
-              <select id="filterWarehouse" class="hidden"><option value="">Todos los almacenes</option></select>
-              <select id="filterImage" class="hidden"><option value="">Imagen: todos</option><option value="with">Con imagen</option><option value="without">Sin imagen</option></select>
-            </div>
-          </aside>
-
-          <div class="showroom-main-column">
-            <div class="client-search-shell glass-panel model-one-search simplified-search-shell compact-inside-stage">
-              <div class="search-client-head simplified showroom-brandbar">
-                <div class="showroom-brand-mini"><span class="brand-emblem brand-emblem-logo" id="catalogBrandEmblem">◇</span><strong id="catalogBrandTitle">Premium Commerce</strong></div>
-                <div class="search-client-actions">
-                  <span class="count-pill hidden"><b id="statTotalTop">0</b> productos</span>
-                  <button class="mini-btn" id="btnIndividualView" type="button">Ver producto seleccionado</button>
-                </div>
-              </div>
-              <div class="search-client-row simplified-search-row v40-inline-search">
-                <input id="searchInput" placeholder="¿Qué producto estás buscando? Nombre, SKU, talla, color o ubicación..." autocomplete="off" />
-                <button class="icon-search-btn" id="btnSearch" type="button" aria-label="Buscar">⌕</button>
-                <button class="ghost-btn category-btn" id="btnOpenCategoryBrowser" type="button">Categoría</button>
-              </div>
-            </div>
-
-            <div class="groups-panel">
-            <div class="applied-filters-panel applied-filters-panel-inline" id="appliedFiltersPanel">
-              <div class="applied-filters-head">
-                <span>Filtros aplicados</span>
-                <button class="link-clear-filters" id="btnClearFilters" type="button">Limpiar todo</button>
-              </div>
-              <div class="applied-filters-list" id="appliedFiltersList">
-                <span class="applied-filter-empty">Sin filtros activos</span>
-              </div>
-            </div>
-            <div class="result-summary-row model-one-summary">
-              <span id="resultSummary">Mostrando 0 productos</span>
-              <span id="pageSummary">Página 1</span>
-            </div>
-            <div class="product-table-wrap model-one-list">
-              <div class="product-head"><div>Producto</div><div>Variantes</div><div>Colores</div><div>Tallas</div></div>
-              <div class="product-list" id="productGrid"></div>
-            </div>
-            <div class="pagination inline-pagination">
-              <button class="ghost-btn" id="btnPrevPage" type="button">←</button>
-              <span id="paginationText">Página 1</span>
-              <button class="ghost-btn" id="btnNextPage" type="button">→</button>
+      <div class="search-top">
+        <div class="search-shell">
+          <div class="search-input-wrap">
+            <div class="searchbar">
+              <input id="searchInput" placeholder="Buscar por SKU, nombre o código de barras..." />
+              <button class="icon-btn" id="btnSearch" title="Buscar">⌕</button>
+              <button class="category-filter-btn" id="btnOpenCategoryPinterest" type="button">Categorías</button>
+              <button class="category-filter-btn diagnostic-filter-btn" id="btnOpenDataQuality" type="button">Diagnóstico</button>
+              <button class="action-btn primary" id="btnScanCode">Escanear QR / barras</button>
             </div>
           </div>
-        </div>
-
-          <aside class="selected-panel">
-            <div class="selected-panel-title">Vista rápida del producto</div>
-            <article class="search-card active-product-card is-clickable" id="activeProductCard" tabindex="0" aria-label="Abrir visor de producto">
-              <button class="search-card-expand-close" id="activeProductCardClose" type="button" aria-label="Cerrar visor">×</button>
-              <div class="product-photo" id="activeProductMedia"><div class="media-empty">Selecciona un producto</div></div>
-              <div class="search-card-body">
-                <div class="eyebrow green">Producto</div>
-                <div class="search-card-title-row">
-                  <div>
-                    <div class="search-card-title" id="activeProductName">Busca o selecciona un producto</div>
-                    <div class="search-card-sku" id="activeProductSku" data-card-field="sku">SKU —</div>
+          <div class="search-card is-clickable" id="activeProductCard" role="button" tabindex="0" aria-label="Expandir tarjeta del producto">
+            <div class="search-card-expand-close" id="activeProductCardClose" aria-label="Cerrar detalle expandido">✕</div>
+            <div class="search-card-media-col">
+              <div class="product-photo empty" id="activeProductImageWrap">
+                <img id="activeProductImage" alt="Imagen del producto" style="display:none" />
+              </div>
+              <div class="search-card-gallery" id="activeProductGallery"></div>
+              <div class="search-card-gallery-nav">
+                <button class="gallery-nav-btn" id="activeProductGalleryPrev" type="button" aria-label="Imagen anterior">‹</button>
+                <span class="gallery-counter" id="activeProductGalleryCounter">01 / 01</span>
+                <button class="gallery-nav-btn" id="activeProductGalleryNext" type="button" aria-label="Imagen siguiente">›</button>
+              </div>
+            </div>
+            <div class="search-card-body">
+              <div class="search-card-title-row">
+                <div>
+                  <div class="search-card-kicker">Producto</div>
+                  <div class="search-card-title" id="activeProductName">—</div>
+                  <div class="search-card-sku" id="activeProductSku">SKU —</div>
+                </div>
+              </div>
+              <div class="search-card-meta">
+                <div class="search-meta-block">
+                  <span class="search-meta-label">Ubicación</span>
+                  <span class="search-meta-value" id="activeLocation">—</span>
+                </div>
+                <div class="search-meta-block">
+                  <span class="search-meta-label">Ubicación en almacén</span>
+                  <span class="search-meta-value store" id="activeStoreLocation">—</span>
+                </div>
+              </div>
+              <div>
+                <div class="muted tiny search-card-variant-copy" id="activeProductMeta">Selecciona un producto para enfocarlo rápido.</div>
+                <div class="variant-groups">
+                  <div class="variant-group">
+                    <div class="variant-group-label">Talla</div>
+                    <div class="variant-strip" id="activeSizeStrip"></div>
+                  </div>
+                  <div class="variant-group">
+                    <div class="variant-group-label">Color</div>
+                    <div class="variant-strip" id="activeColorStrip"></div>
                   </div>
                 </div>
-                <div class="search-card-meta">
-                  <div class="search-meta-block" data-card-field="ubicacion"><span class="search-meta-label">Ubicación</span><b class="search-meta-value" id="activeProductLocation">—</b></div>
-                  <div class="search-meta-block" data-card-field="almacen"><span class="search-meta-label">Almacén</span><b class="search-meta-value store" id="activeProductWarehouse">—</b></div>
-                  <div class="search-meta-block" data-card-field="marca"><span class="search-meta-label">Marca</span><b class="search-meta-value" id="activeProductBrand">—</b></div>
-                  <div class="search-meta-block" data-card-field="categoria"><span class="search-meta-label">Categoría</span><b class="search-meta-value" id="activeProductCategory">—</b></div>
-                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="stock"><span class="search-meta-label">Stock</span><b class="search-meta-value" id="activeProductStock">—</b></div>
-                  <div class="search-meta-block optional-card-field field-hidden" data-card-field="precio"><span class="search-meta-label">Precio</span><b class="search-meta-value" id="activeProductPrice">—</b></div>
-                </div>
-                <div class="active-meta-line" id="activeProductMeta">Variante activa: —</div>
-                <div class="variant-groups">
-                  <div class="variant-group" data-card-field="talla"><span class="variant-group-label">Talla</span><div class="variant-strip" id="activeSizeStrip"></div></div>
-                  <div class="variant-group" data-card-field="color"><span class="variant-group-label">Color</span><div class="variant-strip" id="activeColorStrip"></div></div>
-                </div>
                 <div class="search-card-actions-row">
-                  <button class="search-card-action action-btn primary request-btn" id="btnShareWhatsApp" type="button" data-card-field="request">Agregar a solicitud</button>
+                  <button class="btn secondary search-card-action" id="btnFocusProductMap" type="button">Ver ubicación</button>
+                  <button class="btn search-card-action" id="btnOpenViewerFromProduct" type="button">Abrir visor</button>
                 </div>
-                <div class="search-card-expand-hint">Haz clic para ampliar el producto</div>
-              </div>
-            </article>
-          </aside>
-        </div>
-      </section>
-
-      <div class="search-card-overlay" id="searchCardOverlay" aria-hidden="true"></div>
-      <section class="category-browser-backdrop" id="categoryBrowser" aria-hidden="true">
-        <div class="glass-panel category-browser-panel">
-          <div class="category-browser-head">
-            <div>
-              <div class="eyebrow">Búsqueda por categoría</div>
-              <h2>Explora por categoría</h2>
-              <p>Primero elige a quién va dirigido y luego selecciona la categoría que quieres ver.</p>
-            </div>
-            <button class="search-card-expand-close category-browser-close" id="btnCloseCategoryBrowser" type="button" aria-label="Cerrar búsqueda por categoría">×</button>
-          </div>
-          <div class="category-audience-row" id="categoryAudienceFilters">
-            <button type="button" class="category-audience-chip active" data-audience="all">Todo</button>
-            <button type="button" class="category-audience-chip" data-audience="mujer">Mujer</button>
-            <button type="button" class="category-audience-chip" data-audience="varon">Varón</button>
-            <button type="button" class="category-audience-chip" data-audience="nino">Niño</button>
-            <button type="button" class="category-audience-chip" data-audience="nina">Niña</button>
-            <button type="button" class="category-audience-chip" data-audience="bebe">Bebé</button>
-            <button type="button" class="category-audience-chip" data-audience="unisex">Unisex</button>
-          </div>
-          <div class="category-browser-toolbar" id="categoryBrowserToolbar"></div>
-          <div class="category-browser-filter-toggle-row">
-            <button class="ghost-btn category-filter-toggle" id="btnToggleCategoryFilters" type="button" aria-expanded="false">Mostrar filtros</button>
-          </div>
-          <div class="category-quick-filters is-collapsed" id="categoryQuickFilters" aria-hidden="true">
-            <div class="category-quick-filters-head">
-              <h3>Filtros rápidos</h3>
-              <p>Refina solo con lo esencial: marca, talla y color.</p>
-            </div>
-            <div class="category-quick-selects">
-              <label><span>Marca</span><select id="categoryQuickBrand"><option value="">Seleccionar</option></select></label>
-              <label><span>Talla</span><select id="categoryQuickSize"><option value="">Seleccionar</option></select></label>
-              <label><span>Color</span><select id="categoryQuickColor"><option value="">Seleccionar</option></select></label>
-            </div>
-            <div class="category-quick-actions">
-              <button class="ghost-btn" id="btnResetQuickFilters" type="button">Limpiar</button>
-              <button class="scan-btn" id="btnApplyQuickFilters" type="button">Aplicar filtros</button>
-            </div>
-          </div>
-          <div class="category-browser-grid" id="categoryBrowserGrid"></div>
-        </div>
-      </section>
-      <section class="sheet-view view" id="viewSheet">
-        <div class="glass-panel setup-panel">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Administrador</div>
-              <h2>Vincular Google Sheet</h2>
-              <p>La fila 1 debe contener los encabezados. La app leerá el Sheet, mapeará columnas e importará productos para que el cliente los vea en cards.</p>
-            </div>
-            <div class="sheet-status" id="sheetStatus">No conectado</div>
-          </div>
-
-          <div class="form-grid two">
-            <label>URL del Google Sheet<input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." /></label>
-            <label>Nombre de hoja<input id="sheetName" value="Productos" placeholder="Productos" /></label>
-          </div>
-          <div class="action-row">
-            <button class="ghost-btn" id="btnProbeSheet" type="button">Leer encabezados</button>
-            <button class="primary-btn" id="btnImportSheet" type="button">Importar productos</button>
-          </div>
-
-          <div class="mapping-panel" id="mappingPanel"></div>
-          <div class="import-log" id="importLog"></div>
-        </div>
-      </section>
-
-      <section class="settings-view view" id="viewSettings">
-        <div class="glass-panel setup-panel">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Configuración ligera</div>
-              <h2>Sucursales y acceso cliente</h2>
-              <p>Mantiene solo lo necesario: empresa, sucursales, Google Sheet, productos y link público de consulta.</p>
-            </div>
-          </div>
-          <div class="soft-card brand-settings-card">
-            <h3>Identidad de la tienda</h3>
-            <p class="muted small" id="storeBrandHelper">Personaliza el nombre visible del catálogo y sube el logo de tu tienda.</p>
-            <div class="form-grid two brand-settings-grid">
-              <label>Nombre de la empresa / tienda<input id="storeDisplayName" placeholder="Ej. Premium Commerce" /></label>
-              <label>Logo de la tienda<input id="storeLogoFile" type="file" accept="image/*" /></label>
-            </div>
-            <div class="brand-preview-row">
-              <div class="brand-mark brand-preview-mark" id="storeLogoPreviewMark">C</div>
-              <div class="brand-preview-copy">
-                <strong id="storeBrandPreviewName">Premium Commerce</strong>
-                <span>Así se verá la identidad principal de tu catálogo.</span>
-              </div>
-            </div>
-            <div class="action-row">
-              <button class="primary-btn" id="btnSaveBranding" type="button">Guardar identidad</button>
-              <button class="ghost-btn" id="btnResetBranding" type="button">Restablecer</button>
-            </div>
-          </div>
-
-          <div class="form-grid three">
-            <label>Nombre de nueva sucursal<input id="newBranchName" placeholder="Ej. Lince, Tienda principal" /></label>
-            <label>Tipo<input id="newBranchType" value="catálogo" /></label>
-            <label>Almacenes<input id="newBranchWarehouses" placeholder="Principal, Almacén 2" /></label>
-          </div>
-          <div class="action-row">
-            <button class="primary-btn" id="btnCreateBranch" type="button">Crear sucursal</button>
-            <button class="ghost-btn" id="btnCopyViewer" type="button">Copiar link cliente</button>
-          </div>
-          <div class="viewer-link-box" id="viewerLinkBox">Aún no se generó link.</div>
-
-          <div class="admin-config-grid">
-            <div class="admin-checklist soft-card">
-              <h3>Estado de publicación</h3>
-              <div class="check-row" id="checkBranch">Sucursal creada</div>
-              <div class="check-row" id="checkSheet">Sheet conectado</div>
-              <div class="check-row" id="checkProducts">Productos importados</div>
-              <div class="check-row" id="checkLink">Link cliente listo</div>
-            </div>
-            <div class="soft-card">
-              <h3>Vista exclusiva del cliente</h3>
-              <p class="muted small">Define qué campos podrá ver el cliente en la card. El modo viewer siempre será solo lectura.</p>
-              <div class="visibility-grid" id="cardFieldConfig">
-                <label><input type="checkbox" data-config-field="sku" checked> SKU</label>
-                <label><input type="checkbox" data-config-field="marca" checked> Marca</label>
-                <label><input type="checkbox" data-config-field="categoria" checked> Categoría</label>
-                <label><input type="checkbox" data-config-field="talla" checked> Talla</label>
-                <label><input type="checkbox" data-config-field="color" checked> Color</label>
-                <label><input type="checkbox" data-config-field="ubicacion"> Ubicación</label>
-                <label><input type="checkbox" data-config-field="almacen"> Almacén</label>
-                <label><input type="checkbox" data-config-field="stock"> Stock</label>
-                <label><input type="checkbox" data-config-field="precio"> Precio</label>
-                <label><input type="checkbox" data-config-field="request" checked> Solicitud / carrito</label>
               </div>
             </div>
           </div>
         </div>
-      </section>
-    </main>
+      </div>
+      <div class="product-toolbar">
+        <span class="muted tiny" id="productSummary">Mostrando 0 resultados</span>
+      </div>
+      <div class="search-results-wrap">
+        <div class="product-head">
+          <div>SKU</div><div>Producto</div><div>Variantes</div><div>Ubicación</div><div>Almacén</div>
+        </div>
+        <div class="product-list" id="productList"></div>
+      </div>
+    </section>
+
+    <section class="panel content-panel">
+      <div class="panel-header">
+        <div>
+          <h3 id="contentTitle">Vincular Google Sheet</h3>
+          <div class="muted tiny" id="contentSubtitle">Conecta URL de Google Sheet y nombre de hoja.</div>
+        </div>
+        <div class="tag-row" id="contentTags"></div>
+      </div>
+      <div class="content-wrap" id="contentWrap"></div>
+      <div class="content-foot"><span id="contentStatus">Listo.</span><span id="contentFootRight">—</span></div>
+    </section>
+
+    <section class="panel detail-panel">
+      <div class="panel-header has-actions">
+        <div>
+          <h3 id="detailTitle">Detalle</h3>
+          <div class="muted tiny" id="detailSubtitle">Vista contextual según la opción seleccionada.</div>
+        </div>
+        <div class="detail-head-actions"></div>
+      </div>
+      <div class="detail-wrap" id="detailWrap"></div>
+      <div class="detail-foot"><span id="detailStatus">Sin selección.</span><span class="chip" id="detailChip">—</span></div>
+    </section>
   </div>
 
-  <div class="modal-backdrop show" id="authModal">
-    <div class="auth-card glass-panel">
-      <div class="section-head compact">
+  <div class="scanner-modal" id="scannerModal">
+    <div class="scanner-box">
+      <div class="scanner-head">
         <div>
-          <div class="eyebrow">Acceso</div>
-          <h2>Entrar al catálogo</h2>
-          <p>Admin puede vincular Sheets y configurar. Viewer solo observa y busca productos.</p>
+          <b>Escanear código</b>
+          <div class="muted tiny" id="scannerHint">Activa tu cámara y apunta al QR o código de barras.</div>
+        </div>
+        <button class="btn secondary" id="btnCloseScanner" type="button">Cerrar</button>
+      </div>
+      <div class="scanner-body">
+        <div id="scannerReader"></div>
+        <div class="scanner-actions">
+          <button class="btn secondary" id="btnStopScanner" type="button">Detener</button>
         </div>
       </div>
-      <div class="login-role-choice" id="loginRoleChoice" aria-label="Tipo de ingreso">
-        <button class="login-role-card active" data-login-role="admin" type="button">
-          <b>Ingresar como administrador</b>
-          <span>Vincular Sheet, importar productos y configurar el catálogo.</span>
+    </div>
+  </div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+function escapeHtml(str){
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+</script>
+
+  <div class="auth-modal show" id="authModal">
+    <div class="auth-card auth-card-modern">
+      <div class="auth-hero">
+        <div>
+          <h3 id="authTitle">Iniciar sesión</h3>
+          <p id="authSubtitle">Accede a la gestión de empresa o entra como visualizador con una interfaz más clara y moderna.</p>
+        </div>
+        <div class="auth-badge">WMS Cloud</div>
+      </div>
+
+      <div class="auth-segment" role="tablist" aria-label="Modo de acceso">
+        <button class="auth-segment-btn active" id="authModeLoginBtn" type="button" data-mode="login">Entrar</button>
+        <button class="auth-segment-btn" id="authModeRegisterBtn" type="button" data-mode="register">Crear cuenta</button>
+      </div>
+
+      <div class="auth-role-grid" role="tablist" aria-label="Tipo de acceso">
+        <button class="auth-role-card active" id="authRoleAdminCard" type="button" data-role="admin">
+          <span class="auth-role-kicker">Administrador</span>
+          <strong>Control total</strong>
+          <small>Edita empresa, layouts, racks y vinculaciones.</small>
         </button>
-        <button class="login-role-card" data-login-role="viewer" type="button">
-          <b>Ingresar como visualizador</b>
-          <span>Solo ver, buscar y agregar productos a solicitud.</span>
+        <button class="auth-role-card" id="authRoleViewerCard" type="button" data-role="viewer">
+          <span class="auth-role-kicker">Viewer</span>
+          <strong>Solo visualización</strong>
+          <small>Consulta productos, ubicaciones y mapa sin editar.</small>
         </button>
       </div>
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-auth-mode="login" type="button">Ingresar</button>
-        <button class="auth-tab" data-auth-mode="register" type="button">Crear cuenta</button>
-      </div>
-      <div class="form-grid two">
-        <label>Usuario<input id="loginUsername" autocomplete="username" placeholder="admin" /></label>
-        <label>Contraseña<input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" /></label>
-        <label class="register-only">Empresa<input id="companyName" placeholder="Mi empresa" /></label>
-        <label class="register-only">Código empresa opcional<input id="companyCode" placeholder="CAT-001" /></label>
-        <label class="register-only">Modo de cuenta<select id="accountRole"><option value="admin">Admin: puede editar</option><option value="viewer">Viewer: solo observa</option></select></label>
+
+      <div class="auth-grid auth-grid-modern">
+        <div class="grid auth-hidden-native"><label>Modo</label><select id="authMode"><option value="login">Iniciar sesión</option><option value="register">Crear cuenta</option></select></div>
+        <div class="grid auth-hidden-native"><label>Rol</label><select id="authRole"><option value="admin">Administrador</option><option value="viewer">Visualizador</option></select></div>
+        <div class="grid"><label>Usuario</label><input id="loginUsername" autocomplete="username" placeholder="admin o usuario"></div>
+        <div class="grid"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+        <div class="grid" id="authCompanyWrap"><label>Empresa</label><input id="authCompanyName" placeholder="Mi empresa"></div>
+        <div class="grid" id="authCompanyCodeWrap" style="display:none"><label>Código empresa</label><input id="authCompanyCode" placeholder="WMS-ABC123"></div>
       </div>
       <div class="auth-status" id="authStatus"></div>
-      <div class="action-row end">
-        <button class="ghost-btn" id="btnCloseAuth" type="button">Cerrar</button>
-        <button class="primary-btn" id="btnDoAuth" type="button">Ingresar</button>
+      <div class="auth-actions auth-actions-modern">
+        <button class="btn secondary" id="btnContinueViewer" type="button">Entrar solo a visualizar</button>
+        <button class="btn secondary" id="btnToggleAuthMode" type="button">Cambiar modo</button>
+        <button class="btn secondary" id="btnAuthClose" type="button">Cerrar</button>
+        <button class="btn primary" id="btnDoLogin" type="button">Ingresar</button>
       </div>
     </div>
   </div>
+<script src="./assets/app-main.runtimefix.js?v=wms-v97-buttons-no-bounce"></script>
 
 
-  <button class="request-floating" id="btnRequestFloating" type="button" aria-label="Ver solicitud">
-    <span>Solicitud</span><b id="requestCartCount">0</b>
-  </button>
-
-  <div class="request-drawer" id="requestDrawer" aria-hidden="true">
-    <div class="request-drawer-panel glass-panel">
-      <div class="request-drawer-head">
-        <div>
-          <div class="eyebrow">Solicitud del cliente</div>
-          <h2>Productos elegidos</h2>
-          <p>Revisa tallas y colores antes de enviar o copiar la solicitud.</p>
-        </div>
-        <button class="search-card-expand-close request-close" id="btnCloseRequestDrawer" type="button" aria-label="Cerrar solicitud">×</button>
-      </div>
-      <div class="request-list" id="requestCartList"></div>
-      <div class="request-actions">
-        <button class="ghost-btn" id="btnClearRequest" type="button">Vaciar</button>
-        <button class="ghost-btn" id="btnCopyRequest" type="button">Copiar solicitud</button>
-        <button class="primary-btn" id="btnSendRequest" type="button">Enviar solicitud</button>
-      </div>
-    </div>
+  
+<div id="appModalBackdrop" class="app-modal-backdrop" aria-hidden="true">
+  <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="appModalTitle">
+    <div class="app-modal-head"><b id="appModalTitle">Aviso</b><button class="tiny-btn" type="button" id="appModalClose">✕</button></div>
+    <div class="app-modal-body" id="appModalBody"></div>
+    <div class="app-modal-actions" id="appModalActions"></div>
   </div>
+</div>
+<div id="toastStack" class="toast-stack"></div>
+<div id="searchCardOverlay" class="search-card-overlay" aria-hidden="true"></div>
 
-  <div class="toast-stack" id="toastStack"></div>
-  <script src="./assets/app-main.js?v=v58-persistent-gear"></script>
+<input id="configImportInput" class="sheet-upload-hidden" type="file" accept="application/json">
+
+<script>console.info("WMS v89 force puertas modelo 2 cargado");</script>
+
+<script>
+window.__WMS_V91_ZIP_ACTIVO__ = true;
+console.info('WMS v91 activo: puertas modelo imagen 2 + botón guardar layout');
+</script>
+
 </body>
 </html>
