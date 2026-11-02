@@ -1,86 +1,61 @@
-# Catálogo Visual Cliente · v4 Modelo 1
+# Catálogo Visual
 
-App Cloudflare Pages + Functions + D1 para consulta de productos desde Google Sheets.
+Catálogo para clientes alimentado desde Google Sheets. Corre en **Cloudflare Pages + Functions + D1**.
 
-## Cambios v4
-- Interfaz adaptada al Modelo 1 de búsqueda.
-- Buscador simple y visible para cliente.
-- Resultados agrupados por nombre de producto/marca.
-- Lista con miniatura, variantes, colores y tallas.
-- Panel derecho de producto seleccionado dentro del modo búsqueda.
-- Click en producto o en `Abrir visor` para abrir card expandida.
-- Modo Admin conserva edición, vinculación Sheet, importación y generación de link cliente.
-- Modo Viewer queda solo lectura: buscar, seleccionar y visualizar productos.
+- **Admin**: vincula un Sheet, mapea columnas, importa productos, configura qué ve el cliente y genera el link público.
+- **Cliente** (`/viewer/<token>`) o **viewer**: busca, filtra, ve variantes y arma una solicitud por WhatsApp. Solo lectura.
 
-## Cloudflare Pages
-- Build command: vacío
-- Build output directory: `public`
-- D1 binding: `DB`
+## Estructura
 
+```
+public/                 Frontend estático (lo que publica Pages)
+functions/api/[[path]].js  Router de la API
+lib/                    Lógica: auth, catálogo (SQL), Google Sheets, configuración, esquema
+migrations/             SQL para D1 (la API también crea las tablas sola)
+tests/                  Servidor local con D1 simulado + pruebas de la API
+```
 
-V6
-- Corrige jerarquía visual del visor: la card del producto seleccionado queda al frente y las tarjetas Anterior / Siguiente quedan detrás.
+## Despliegue
 
+1. Cloudflare Pages → Build command: vacío · Output directory: `public` · binding D1: `DB`.
+2. Contraseña del admin inicial (solo se usa con la base vacía):
+   ```bash
+   npx wrangler pages secret put ADMIN_PASSWORD
+   ```
+3. Opcional: aplicar migraciones manualmente con `npm run db:migrate`.
 
-V7
-- Corrige de forma forzada la jerarquía del visor: la card principal se monta temporalmente en el body y usa z-index superior al overlay y a las cards Anterior/Siguiente.
-- Verificado con `node --check` en `public/assets/app-main.js`.
+> **Si ya tienes el sitio publicado:** el usuario `admin` existente conserva su contraseña. Si sigue siendo `admin123`, cámbiala desde *Configuración → Seguridad de la cuenta*; la app avisa al iniciar sesión.
 
-V10
-- Ajusta proporción del visor usando como referencia el ZIP v14 proporcionado.
-- Imagen/video ocupa todo el alto del área izquierda del card.
-- Panel de información queda compacto y sin scroll interno en escritorio.
-- Mejora contraste y lectura de chips de color.
+### Variables (`wrangler.toml`)
+| Variable | Uso |
+|---|---|
+| `ADMIN_USERNAME` | Usuario admin inicial |
+| `ADMIN_PASSWORD` | **Secreto.** Contraseña del admin inicial |
+| `ALLOW_PUBLIC_REGISTER` | `"false"` desactiva el registro público de cuentas |
+| `PBKDF2_ITERATIONS` | Coste del hash de contraseñas (máx. 100000) |
 
+## Desarrollo local
 
-V12
-- Ajusta el visor para acercarlo al diseño de referencia: card 16:9, media full-bleed y panel derecho glass overlay interno.
+Con Cloudflare: `npm install && npm run dev`.
 
-## V14 UX/UI
-- Se separa mejor la experiencia Admin vs Viewer.
-- Viewer público/cliente abre sin sidebar administrativo, con topbar limpia y buscador principal.
-- Resultados agrupados por producto con CTA visual "Ver producto".
-- Configuración de propietario para elegir qué campos aparecen en la card del cliente.
-- Botón WhatsApp opcional para compartir producto.
-- Checklist de publicación: sucursal, Sheet, productos y link cliente.
+Sin Cloudflare (Node 22+, sin dependencias): servidor con D1 simulado sobre SQLite y un Sheet de ejemplo con 3.000 filas.
+```bash
+npm run test:server      # http://localhost:8788  (admin / admin123)
+npm run test:api         # en otra terminal: 47 pruebas de la API
+```
 
+## API principal
 
-V15
-- Limpia el panel de información del visor: oculta ubicación/almacén para cliente, elimina botones redundantes y deja un único CTA “Solicitar ahora”.
-- Ajusta tamaños, espaciados y distribución para evitar que tallas, colores y botones se monten.
+| Método y ruta | Acceso |
+|---|---|
+| `POST /api/login`, `/viewer-login`, `/register`, `/logout`, `/password` | — |
+| `GET/PUT /api/settings` | sesión / admin |
+| `GET /api/branches` · `POST` · `PUT/DELETE /api/branches/:id` | sesión / admin |
+| `GET /api/branches/:id/products?q=&brand=&category=&size=&color=&audience=&page=&limit=&group_by=name` | sesión |
+| `GET /api/branches/:id/catalog-index` | sesión |
+| `GET/POST /api/branches/:id/sheet` · `POST /api/branches/:id/import` | admin |
+| `POST /api/branches/:id/view-link` (`{"rotate":true}` para regenerar) | admin |
+| `GET /api/view-links/:token`, `/products`, `/catalog-index` | público |
+| `GET /api/sheets/probe?url=&sheet=` | admin |
 
-V17
-- Agrega flujo de solicitud/mini carrito para clientes.
-- Reemplaza el CTA principal por “Agregar a solicitud” con estado “Agregado ✓”.
-- Agrega panel flotante para revisar, quitar, copiar y enviar la solicitud.
-- Limpia la vista viewer con resultados tipo cards compactas y sin campos internos como ubicación/almacén.
-- Mantiene configuración de campos visibles para propietario y comportamiento solo lectura para viewer.
-
-
-V19
-- Ajusta offset del panel de información del visor a 6px arriba, abajo y derecha.
-- Oculta etiqueta Producto y texto de familia agrupada.
-- Reubica botón de cierre visualmente dentro del panel de información.
-
-## v43 fix
-Esta versión sincroniza los cambios Champagne Luxury también dentro de /public, que es la carpeta usada por Cloudflare Pages. Incluye:
-- Paleta Champagne Luxury aplicada.
-- Botón "Buscar por categoría" en la misma fila del buscador.
-- Opción "Categorías" removida de la barra lateral izquierda.
-- Filtro de categoría oculto del panel lateral, manteniendo compatibilidad interna.
-
-
-Actualización v53:
-- Se agregó el selector de Categoría dentro del panel lateral de Filtros, justo debajo del encabezado y manteniendo también el botón Categoría junto al buscador.
-
-
-Actualización v58:
-- Se agregó un botón flotante de engranaje visible en Vincular Sheet y Configuración.
-- El engranaje permite reabrir el panel de opciones sin recargar ni volver al catálogo.
-- Se mantiene oculto en vista catálogo para no duplicar el botón de Ajustes del lateral.
-
-
-Actualización v67:
-- Viewer puede entrar sin usuario/contraseña desde el selector de acceso.
-- Lista central en 2 columnas de productos.
-- Se ocultó el contador de variantes dentro de cada card/listado.
+Historial: ver [CHANGELOG.md](CHANGELOG.md).

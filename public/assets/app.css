@@ -4818,3 +4818,68 @@ body.viewer-mode:not(.public-viewer) .sidebar.admin-config-panel #btnAuth::befor
 body.viewer-mode:not(.public-viewer) .sidebar.admin-config-panel #sessionPill{
   text-align:center!important;
 }
+
+/* v70: estado de carga del listado y tarjeta de seguridad */
+#productGrid.is-loading{opacity:.55;transition:opacity .15s ease;pointer-events:none}
+.security-card{margin-top:18px}
+
+/* v70: diseño móvil. Antes la barra de filtros quedaba encima de la lista. */
+@media (max-width: 760px) {
+  html body.catalog-fit-mode #appRoot.client-app,
+  html body.catalog-fit-mode #appRoot .main-shell { height: auto !important; min-height: 100dvh; overflow: visible !important; }
+  html body.catalog-fit-mode #appRoot .product-client-stage.model-one-board {
+    display: flex !important; flex-direction: column !important; gap: 10px !important;
+    height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important;
+  }
+  html body.catalog-fit-mode #appRoot .client-search-shell { order: 0; position: relative !important; inset: auto !important; width: auto !important; height: auto !important; grid-template-columns: 1fr !important; }
+  html body.catalog-fit-mode #appRoot .client-search-shell > * { min-width: 0 !important; max-width: 100% !important; }
+  html body.catalog-fit-mode #appRoot .search-client-row { grid-template-columns: minmax(0, 1fr) auto auto !important; }
+  html body.catalog-fit-mode #appRoot .showroom-filter-sidebar {
+    order: 1; display: flex !important; flex-direction: column !important; gap: 10px !important;
+    position: relative !important; inset: auto !important; width: auto !important; height: auto !important; min-height: 0 !important;
+  }
+  html body.catalog-fit-mode #appRoot .showroom-filter-rail {
+    flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto !important;
+    width: 100% !important; height: auto !important; min-height: 0 !important; gap: 8px !important; padding: 4px 2px !important;
+  }
+  html body.catalog-fit-mode #appRoot .showroom-filter-rail .rail-item { flex: 0 0 auto !important; min-width: 74px !important; height: auto !important; margin: 0 !important; }
+  html body.catalog-fit-mode #appRoot #mainFilterPanel { width: auto !important; height: auto !important; max-height: none !important; position: relative !important; inset: auto !important; }
+  html body.catalog-fit-mode.sidebar-filters-collapsed #appRoot #mainFilterPanel { display: none !important; }
+  html body.catalog-fit-mode #appRoot .groups-panel { order: 2; position: relative !important; inset: auto !important; height: auto !important; max-height: none !important; overflow: visible !important; }
+  html body.catalog-fit-mode #appRoot #productGrid { grid-template-columns: 1fr !important; height: auto !important; max-height: none !important; overflow: visible !important; }
+  html body.catalog-fit-mode #appRoot #viewCatalog { grid-template-columns: minmax(0, 1fr) !important; width: 100% !important; min-width: 0 !important; }
+  html body.catalog-fit-mode #appRoot .product-client-stage.model-one-board,
+  html body.catalog-fit-mode #appRoot .groups-panel,
+  html body.catalog-fit-mode #appRoot .product-table-wrap,
+  html body.catalog-fit-mode #appRoot #productGrid,
+  html body.catalog-fit-mode #appRoot #productGrid .product-row { width: 100% !important; min-width: 0 !important; max-width: 100% !important; box-sizing: border-box !important; }
+  html body.catalog-fit-mode #appRoot .groups-panel { grid-template-columns: minmax(0, 1fr) !important; }
+  html body.catalog-fit-mode #appRoot #productGrid .product-row { grid-template-columns: minmax(0, 1fr) auto !important; }
+  html body.catalog-fit-mode #appRoot #productGrid .group-product-cell { min-width: 0 !important; }
+  html body.catalog-fit-mode #appRoot .search-client-row { grid-template-columns: minmax(0, 1fr) 48px auto !important; gap: 8px !important; }
+  html body.catalog-fit-mode #appRoot .search-client-row .category-btn { width: auto !important; min-width: 0 !important; padding: 0 12px !important; font-size: 0 !important; }
+  html body.catalog-fit-mode #appRoot .search-client-row .category-btn::before { font-size: 20px !important; margin: 0 !important; }
+}
+
+/* v70: visor de producto en móvil como hoja a pantalla completa con scroll. */
+@media (max-width: 760px) {
+  html body #activeProductCard#activeProductCard.search-card-expanded {
+    position: fixed !important; top: 8px !important; left: 8px !important; right: 8px !important; bottom: 8px !important;
+    transform: none !important; width: auto !important; height: auto !important; max-width: none !important; max-height: none !important;
+    aspect-ratio: auto !important; display: flex !important; flex-direction: column !important;
+    overflow-x: hidden !important; overflow-y: auto !important; padding: 0 !important; border-radius: 22px !important; gap: 0 !important;
+  }
+  html body #activeProductCard#activeProductCard.search-card-expanded > .product-photo {
+    position: relative !important; inset: auto !important; width: 100% !important; height: auto !important;
+    aspect-ratio: 4 / 5 !important; max-height: 58vh !important; min-height: 0 !important; flex: 0 0 auto !important; border-radius: 22px 22px 0 0 !important;
+  }
+  html body #activeProductCard#activeProductCard.search-card-expanded > .search-card-body {
+    position: relative !important; inset: auto !important; top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
+    width: 100% !important; max-width: none !important; min-width: 0 !important; box-sizing: border-box !important; height: auto !important; max-height: none !important; overflow: visible !important;
+    margin: 0 !important; transform: none !important; flex: 0 0 auto !important; border-radius: 0 0 22px 22px !important; padding: 16px !important;
+  }
+  html body #activeProductCard#activeProductCard.search-card-expanded .search-card-expand-close {
+    position: fixed !important; top: 20px !important; right: 20px !important; left: auto !important; z-index: 10040 !important;
+  }
+  html body #expandedSideCard-left, html body #expandedSideCard-right { display: none !important; }
+}

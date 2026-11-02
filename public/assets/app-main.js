@@ -14,26 +14,32 @@
   };
 
   const DEFAULT_BRANDING_CONFIG = {
-    name:'Premium Commerce',
+    name:'',
     logo:''
   };
 
-  function loadClientConfig() {
-    try { return { ...DEFAULT_UI_CONFIG, ...JSON.parse(localStorage.getItem('catalogoClientUiConfig') || '{}') }; }
-    catch { return { ...DEFAULT_UI_CONFIG }; }
+  // La configuración del dueño vive en el servidor (D1) para que también la vean los clientes.
+  function loadClientConfig() { return { ...DEFAULT_UI_CONFIG }; }
+  function loadBrandingConfig() { return { ...DEFAULT_BRANDING_CONFIG }; }
+
+  function applySettings(settings) {
+    state.uiConfig = { ...DEFAULT_UI_CONFIG, ...(settings?.ui_config || {}) };
+    state.branding = { ...DEFAULT_BRANDING_CONFIG, ...(settings?.branding || {}) };
+    syncClientConfigControls();
+    applyCardVisibility();
+    applyBranding();
   }
 
-  function saveClientConfig() {
-    localStorage.setItem('catalogoClientUiConfig', JSON.stringify(state.uiConfig || DEFAULT_UI_CONFIG));
+  async function loadSettings() {
+    if (state.publicMode || !state.auth) return;
+    try { applySettings(await api('/settings')); }
+    catch (err) { console.warn('No se pudo leer la configuración', err); }
   }
 
-  function loadBrandingConfig() {
-    try { return { ...DEFAULT_BRANDING_CONFIG, ...JSON.parse(localStorage.getItem('catalogoBrandingConfig') || '{}') }; }
-    catch { return { ...DEFAULT_BRANDING_CONFIG }; }
-  }
-
-  function saveBrandingConfig() {
-    localStorage.setItem('catalogoBrandingConfig', JSON.stringify(state.branding || DEFAULT_BRANDING_CONFIG));
+  async function saveSettings(patch) {
+    const data = await api('/settings', { method:'PUT', body: JSON.stringify(patch) });
+    applySettings(data);
+    return data;
   }
 
   function loadRequestCart() {
@@ -42,7 +48,27 @@
   }
 
   function saveRequestCart() {
-    sessionStorage.setItem('catalogoRequestCart', JSON.stringify(state.requestItems || []));
+    try { sessionStorage.setItem('catalogoRequestCart', JSON.stringify(state.requestItems || [])); } catch {}
+  }
+
+  function safeUrl(value) {
+    const text = String(value || '').trim();
+    return /^https?:\/\//i.test(text) || /^data:image\/(png|jpe?g|webp|gif);/i.test(text) ? text : '';
+  }
+
+  let productsController = null;
+  function nextProductsSignal() {
+    productsController?.abort();
+    productsController = new AbortController();
+    return productsController.signal;
+  }
+
+  let searchTimer = null;
+  function scheduleSearch() {
+    clearTimeout(searchTimer);
+    const q = $('#searchInput')?.value.trim() || '';
+    if (q.length === 1) return;
+    searchTimer = setTimeout(() => { state.page = 1; loadProducts(); }, 350);
   }
 
   const state = {
@@ -63,7 +89,7 @@
     authMode: 'login',
     headers: [],
     mapping: {},
-    sidebarCollapsed: localStorage.getItem('catalogoSidebarCollapsed') === '1',
+    sidebarCollapsed: (() => { try { return localStorage.getItem('catalogoSidebarCollapsed') === '1'; } catch { return false; } })(),
     uiConfig: loadClientConfig(),
     branding: loadBrandingConfig(),
     requestItems: loadRequestCart(),
@@ -71,11 +97,12 @@
     categoryAudience: 'all',
     categoryAudienceFilter: '',
     categoryBrowserProducts: [],
+    categoryIndex: null,
     categoryBrowserPage: 1,
     categoryCache: {},
     categoryHydrating: false,
     categoryQuickFiltersOpen: false,
-    mainFiltersOpen: true,
+    mainFiltersOpen: !(window.matchMedia && window.matchMedia('(max-width: 760px)').matches),
     loginAccessMode: 'admin',
     variantFilters: { size:'', color:'' }
   };
@@ -240,12 +267,13 @@
     $('#btnDoAuth').addEventListener('click', doAuth);
     $$('.auth-tab').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
     $$('.login-role-card').forEach(btn => btn.addEventListener('click', () => setLoginAccessMode(btn.dataset.loginRole || 'admin')));
-    $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.categoryBrowserProducts = []; resetCategoryCache(); state.page = 1; await loadSheetConfig(); await loadProducts(); });
-    $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.categoryBrowserProducts = []; resetCategoryCache(); state.page = 1; if (state.publicMode) renderLocalPublicProducts(); else await loadProducts(); });
+    $('#branchSelect').addEventListener('change', async () => { state.branchId = $('#branchSelect').value; state.categoryBrowserProducts = []; state.categoryIndex = null; resetCategoryCache(); state.page = 1; await loadSheetConfig(); await loadProducts(); });
+    $('#viewerBranchSelect')?.addEventListener('change', async () => { state.branchId = $('#viewerBranchSelect').value; $('#branchSelect').value = state.branchId; state.categoryBrowserProducts = []; state.categoryIndex = null; resetCategoryCache(); state.page = 1; await loadProducts(); });
     $('#btnReloadProducts').addEventListener('click', () => loadProducts());
     $('#btnSearch').addEventListener('click', () => { state.page = 1; loadProducts(); });
     $('#btnIndividualView')?.addEventListener('click', () => openActiveProductCard());
-    $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') { state.page = 1; loadProducts(); } });
+    $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(searchTimer); state.page = 1; loadProducts(); } });
+    $('#searchInput').addEventListener('input', scheduleSearch);
     ['filterBrand','filterCategory','filterWarehouse','filterImage'].forEach(id => $(`#${id}`)?.addEventListener('change', () => { state.page = 1; loadProducts(); renderAppliedFilters(); }));
     $('#filterSize')?.addEventListener('change', () => { state.variantFilters.size = $('#filterSize').value || ''; state.page = 1; loadProducts(); renderAppliedFilters(); });
     $('#filterColor')?.addEventListener('change', () => { state.variantFilters.color = $('#filterColor').value || ''; state.page = 1; loadProducts(); renderAppliedFilters(); });
@@ -258,8 +286,10 @@
     $('#btnProbeSheet').addEventListener('click', probeSheet);
     $('#btnImportSheet').addEventListener('click', importSheet);
     $('#btnCreateBranch').addEventListener('click', createBranch);
-    $('#btnShareViewer').addEventListener('click', generateViewerLink);
-    $('#btnCopyViewer').addEventListener('click', generateViewerLink);
+    $('#btnShareViewer').addEventListener('click', () => generateViewerLink(false));
+    $('#btnCopyViewer').addEventListener('click', () => generateViewerLink(false));
+    $('#btnRotateViewer')?.addEventListener('click', () => generateViewerLink(true));
+    $('#btnChangePassword')?.addEventListener('click', changePassword);
     $('#btnOpenProductViewer')?.addEventListener('click', e => { e.stopPropagation(); openActiveProductCard(); });
     $('#activeProductCard')?.addEventListener('click', e => {
       if (e.target.closest('button, select, input, textarea, a, video, iframe')) return;
@@ -431,6 +461,7 @@
       $('#authStatus').textContent = '';
       await loadBranches();
       toast(selectedRole === 'viewer' ? 'Ingresaste como visualizador.' : 'Acceso correcto.');
+      if (state.auth?.weak_password) toast('Tu contraseña es débil. Cámbiala en Configuración → Seguridad de la cuenta.', 'bad');
     } catch (err) {
       $('#authStatus').textContent = err.message;
       updateAuthSubmitButton();
@@ -441,6 +472,7 @@
     const data = await api('/branches');
     state.branches = data.branches || [];
     if (!state.branchId && state.branches[0]) state.branchId = state.branches[0].id;
+    await loadSettings();
     renderBranches();
     hydrateSessionLabel();
     await loadSheetConfig();
@@ -457,9 +489,9 @@
       state.summary = data.sheet?.summary || { total: Number(data.sheet?.product_count || 0), with_image: 0, with_stock: 0 };
       state.facets = data.sheet?.facets || {};
       state.categoryBrowserProducts = [];
+      applySettings(data.settings);
       renderBranches();
       await loadProducts();
-      applyBranding();
     } catch (err) {
       renderEmptyState(err.message || 'No se pudo abrir el link público.');
     }
@@ -488,7 +520,7 @@
   }
 
   async function loadSheetConfig() {
-    if (state.publicMode || !state.branchId || !state.auth) return;
+    if (state.publicMode || !state.branchId || !isAdmin()) return;
     try {
       const data = await api(`/branches/${state.branchId}/sheet`);
       const cfg = data.config || {};
@@ -505,6 +537,7 @@
 
 
   function inferAudience(product) {
+    if (product?._audience) return product._audience;
     const hay = norm([val(product,'genero'), val(product,'categoria'), val(product,'nombre'), val(product,'variante')].filter(Boolean).join(' '));
     if (!hay) return 'all';
     if (/(nina|niña|girl|junior mujer)/.test(hay)) return 'nina';
@@ -546,31 +579,22 @@
     return Array.isArray(state.products) ? state.products.flatMap(p => p._groupItems || [p]) : [];
   }
 
+  // El explorador de categorías usa un índice precalculado en el servidor
+  // (categorías + combinaciones marca/talla/color), no miles de productos.
   async function hydrateCategoryBrowserProducts(force = false) {
-    if (!force && Array.isArray(state.categoryBrowserProducts) && state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
-    if (state.publicMode && state.token) {
-      try {
-        const params = new URLSearchParams({ page: '1', limit: '5000', group_by: 'name' });
-        const data = await api(`/view-links/${encodeURIComponent(state.token)}/products?${params}`);
-        state.categoryBrowserProducts = (data.items || []).flatMap(p => p._groupItems || [p]);
-        if (state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
-      } catch (err) {
-        console.warn('No se pudo precargar categorías públicas', err);
-      }
-      state.categoryBrowserProducts = Array.isArray(state.products) ? state.products.slice() : [];
-      return state.categoryBrowserProducts;
+    if (!force && state.categoryIndex) return state.categoryBrowserProducts;
+    const path = state.publicMode && state.token
+      ? `/view-links/${encodeURIComponent(state.token)}/catalog-index`
+      : (state.branchId && state.auth ? `/branches/${state.branchId}/catalog-index` : '');
+    if (!path) return categorySourceProducts();
+    try {
+      const data = await api(path);
+      state.categoryIndex = { categories: data.categories || [], tuples: data.tuples || [] };
+      state.categoryBrowserProducts = state.categoryIndex.tuples.map(t => ({ marca: t.m || '', talla: t.t || '', color: t.c || '', _audience: t.a || 'all' }));
+    } catch (err) {
+      console.warn('No se pudo cargar el índice de categorías', err);
+      state.categoryBrowserProducts = categorySourceProducts().slice();
     }
-    if (state.branchId && state.auth) {
-      try {
-        const params = new URLSearchParams({ page: '1', limit: '5000', group_by: 'name' });
-        const data = await api(`/branches/${state.branchId}/products?${params}`);
-        state.categoryBrowserProducts = (data.items || []).flatMap(p => p._groupItems || [p]);
-        if (state.categoryBrowserProducts.length) return state.categoryBrowserProducts;
-      } catch (err) {
-        console.warn('No se pudo precargar categorías completas', err);
-      }
-    }
-    state.categoryBrowserProducts = categorySourceProducts().slice();
     return state.categoryBrowserProducts;
   }
 
@@ -617,6 +641,19 @@
     state.categoryCache ||= {};
     const cacheBucket = state.categoryCache[cacheKey] ||= {};
     let cached = cacheBucket[audience];
+
+    if (!cached && state.categoryIndex) {
+      const allItems = (state.categoryIndex.categories || [])
+        .filter(c => (c.audience || 'all') === audience)
+        .map(c => {
+          const category = c.category || 'Sin categoría';
+          return { key: norm(category), category, audience, familyCount: Number(c.families || 0), sample: { categoria: category, imagen: c.media || '' }, items: [] };
+        })
+        .sort((a,b) => String(a.category).localeCompare(String(b.category), 'es'));
+      const visualItems = allItems.filter(entry => mediaUrl(entry.sample));
+      cached = { items: visualItems.length ? visualItems : allItems, allCount: allItems.length, visualCount: visualItems.length };
+      cacheBucket[audience] = cached;
+    }
 
     if (!cached) {
       const map = new Map();
@@ -688,7 +725,7 @@
         <div class="category-tile-media">${categoryCardThumb(sample, idx)}</div>
         <div class="category-tile-body">
           <strong>${esc(entry.category)}</strong>
-          <small>${esc(String(entry.familyKeys?.size || entry.items.length))} familia(s)</small>
+          <small>${esc(String(entry.familyCount ?? entry.familyKeys?.size ?? entry.items.length))} familia(s)</small>
         </div>
       </button>`;
     }).join('');
@@ -853,34 +890,6 @@
     loadProducts();
   }
 
-  function filterGroupedProductsByVariants(groups) {
-    const wantedSize = norm(state.variantFilters.size || '');
-    const wantedColor = norm(state.variantFilters.color || '');
-    if (!wantedSize && !wantedColor) return groups || [];
-    return (groups || []).map(group => {
-      const items = group?._groupItems?.length ? group._groupItems : [group];
-      const matches = items.filter(item => {
-        if (wantedSize && norm(val(item,'talla')) !== wantedSize) return false;
-        if (wantedColor && norm(val(item,'color')) !== wantedColor) return false;
-        return true;
-      });
-      if (!matches.length) return null;
-      const preferred = matches.find(p => mediaUrl(p)) || matches[0];
-      return {
-        ...group,
-        ...preferred,
-        _groupItems: matches,
-        _variantCount: matches.length,
-        _sizeOptions: uniqueValues(matches, 'talla'),
-        _colorOptions: uniqueValues(matches, 'color'),
-        _locationOptions: uniqueValues(matches, 'ubicacion'),
-        _warehouseOptions: uniqueValues(matches, 'almacen'),
-        _skuOptions: uniqueValues(matches, 'sku')
-      };
-    }).filter(Boolean);
-  }
-
-
   function ensureSelectOption(selectId, value, label = value) {
     const select = $(`#${selectId}`);
     if (!select) return;
@@ -904,7 +913,7 @@
 
     requestAnimationFrame(() => {
       renderCategoryBrowser();
-      if (!state.categoryHydrating && !(Array.isArray(state.categoryBrowserProducts) && state.categoryBrowserProducts.length)) {
+      if (!state.categoryHydrating && !state.categoryIndex) {
         state.categoryHydrating = true;
         setTimeout(async () => {
           await hydrateCategoryBrowserProducts(false);
@@ -933,53 +942,7 @@
     toast(`Mostrando categoría: ${category}`);
   }
 
-  async function loadProducts() {
-    if (state.publicMode) return loadPublicProducts();
-    if (!state.branchId || !state.auth) return;
-    const useLocalAdvancedFiltering = !!(state.variantFilters.size || state.variantFilters.color);
-    const params = new URLSearchParams({ page: String(useLocalAdvancedFiltering ? 1 : state.page), limit: String(useLocalAdvancedFiltering ? 5000 : PAGE_SIZE), q: $('#searchInput').value.trim(), group_by: 'name' });
-    const map = { filterBrand:'brand', filterCategory:'category', filterWarehouse:'warehouse', filterImage:'image_state' };
-    Object.entries(map).forEach(([id,key]) => { const v = $(`#${id}`).value; if (v) params.set(key, v); });
-    try {
-      const data = await api(`/branches/${state.branchId}/products?${params}`);
-      let items = data.items || [];
-      if (useLocalAdvancedFiltering) {
-        const filteredGroups = filterGroupedProductsByVariants(items);
-        state.total = filteredGroups.length;
-        state.groupTotalProducts = filteredGroups.reduce((acc, item) => acc + Number(item._variantCount || item._groupItems?.length || 1), 0);
-        state.totalPages = Math.max(1, Math.ceil(filteredGroups.length / PAGE_SIZE));
-        state.page = Math.min(state.page, state.totalPages);
-        const from = (state.page - 1) * PAGE_SIZE;
-        items = filteredGroups.slice(from, from + PAGE_SIZE);
-        state.summary = {
-          ...(data.summary || {}),
-          total: filteredGroups.length,
-          with_image: filteredGroups.filter(p => mediaUrl(p)).length,
-          with_stock: filteredGroups.filter(p => val(p,'stock')).length
-        };
-      } else {
-        state.summary = data.summary || {};
-        state.total = Number(data.total || 0);
-        state.groupTotalProducts = Number(data.group_total_products || 0);
-        state.page = Number(data.page || 1);
-        state.totalPages = Number(data.total_pages || 1);
-      }
-      state.products = items;
-      state.facets = data.facets || {};
-      renderFacets();
-      renderSummary();
-      renderProducts(state.products);
-      renderMainVariantFilters();
-      renderAppliedFilters();
-    } catch (err) {
-      renderEmptyState(err.message);
-    }
-  }
-
-
-  async function loadPublicProducts() {
-    if (!state.token) return renderLocalPublicProducts();
-    const useServerAdvancedFiltering = !!(state.variantFilters.size || state.variantFilters.color);
+  function productQueryParams() {
     const params = new URLSearchParams({
       page: String(state.page),
       limit: String(PAGE_SIZE),
@@ -990,8 +953,24 @@
     Object.entries(map).forEach(([id,key]) => { const v = $(`#${id}`)?.value || ''; if (v) params.set(key, v); });
     if (state.variantFilters.size) params.set('size', state.variantFilters.size);
     if (state.variantFilters.color) params.set('color', state.variantFilters.color);
+    if (state.categoryAudienceFilter) params.set('audience', state.categoryAudienceFilter);
+    return params;
+  }
+
+  // Un solo flujo para admin, viewer y link público: filtros, agrupación y paginación en el servidor.
+  async function loadProducts() {
+    let path;
+    if (state.publicMode) {
+      if (!state.token) return renderLocalPublicProducts();
+      path = `/view-links/${encodeURIComponent(state.token)}/products`;
+    } else {
+      if (!state.branchId || !state.auth) return;
+      path = `/branches/${state.branchId}/products`;
+    }
+    const signal = nextProductsSignal();
+    $('#productGrid')?.classList.add('is-loading');
     try {
-      const data = await api(`/view-links/${encodeURIComponent(state.token)}/products?${params}`);
+      const data = await api(`${path}?${productQueryParams()}`, { signal });
       state.products = data.items || [];
       state.facets = data.facets || {};
       state.summary = data.summary || {};
@@ -1005,7 +984,10 @@
       renderMainVariantFilters();
       renderAppliedFilters();
     } catch (err) {
-      renderEmptyState(err.message || 'No se pudo cargar el catálogo público.');
+      if (err?.name === 'AbortError') return;
+      renderEmptyState(err.message || 'No se pudo cargar el catálogo.');
+    } finally {
+      if (!signal.aborted) $('#productGrid')?.classList.remove('is-loading');
     }
   }
 
@@ -1106,7 +1088,12 @@
       sku:['sku','Sku','SKU'], nombre:['nombre','Nombre','name','producto'], variante:['variante','Variante','modelo','cod_modelo','cod / modelo'], marca:['marca','brand'], categoria:['categoria','categoría','category'], almacen:['almacen','almacén','warehouse'], ubicacion:['ubicacion','ubicación','location'], stock:['stock','cantidad','cant','Cant. Restock'], imagen:['imagen','image','foto','url_imagen','link imagen'], video:['video','link_video','url_video','link video'], color:['color','Color'], talla:['talla','Talla','size'], barras:['barras','Barras','barcode','codigo de barras']
     };
     const keys = aliases[key] || [key];
-    for (const k of keys) if (product?.[k] != null && String(product[k]).trim()) return String(product[k]).trim();
+    for (const k of keys) {
+      if (product?.[k] != null && String(product[k]).trim()) {
+        const value = String(product[k]).trim();
+        return key === 'imagen' || key === 'video' ? safeUrl(value) : value;
+      }
+    }
     return '';
   }
 
@@ -1142,13 +1129,13 @@
       }
       if (id) {
         const poster = `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1200`;
-        const proxy = `${API}/drive-video?id=${encodeURIComponent(id)}`;
+        const proxy = `${API}/drive-video?id=${encodeURIComponent(id)}${state.publicMode && state.token ? `&t=${encodeURIComponent(state.token)}` : ''}`;
         return `<video src="${esc(proxy)}" poster="${esc(poster)}" controls muted loop playsinline preload="metadata"></video>`;
       }
       if (/\.mp4($|\?)/i.test(src)) return `<video src="${esc(src)}" controls muted loop playsinline preload="metadata"></video>`;
     }
     const finalSrc = id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1600` : src;
-    return `<img src="${esc(finalSrc)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.parentElement.classList.add('empty');this.remove();">`;
+    return `<img src="${esc(finalSrc)}" alt="${esc(val(product,'nombre') || 'Producto')}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.parentElement&&this.parentElement.classList.add('empty');this.remove();">`;
   }
 
   function productIdentity(product) {
@@ -1235,7 +1222,11 @@
         if (group?._groupKey && !item._groupKey) item._groupKey = group._groupKey;
         selectProduct(item);
       };
-      row.addEventListener('click', pick);
+      row.addEventListener('click', () => {
+        pick();
+        // En móvil el panel lateral no cabe: se abre directamente la card del producto.
+        if (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) openActiveProductCard();
+      });
       row.addEventListener('keydown', e => { if (e.key === 'Enter') pick(); });
     });
     const keep = state.selected && products.find(p => productGroupKey(p) === productGroupKey(state.selected));
@@ -1535,8 +1526,10 @@
   function paintBrandMark(el, name, logo) {
     if (!el) return;
     el.classList.toggle('has-logo', !!logo);
+    logo = safeUrl(logo);
+    el.classList.toggle('has-logo', !!logo);
     if (logo) {
-      el.innerHTML = `<img src="${logo}" alt="Logo de ${esc(name)}" />`;
+      el.innerHTML = `<img src="${esc(logo)}" alt="Logo de ${esc(name)}" />`;
     } else {
       el.textContent = brandingInitial(name);
     }
@@ -1544,7 +1537,7 @@
 
   function getBrandingName() {
     const custom = String(state.branding?.name || '').trim();
-    return custom || getBranch()?.name || 'Catálogo Visual';
+    return custom || state.auth?.company_name || getBranch()?.name || 'Catálogo Visual';
   }
 
   function applyBranding() {
@@ -1584,48 +1577,83 @@
       });
     }
     if (file) {
-      file.addEventListener('change', () => {
+      file.addEventListener('change', async () => {
         const picked = file.files && file.files[0];
         if (!picked) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          state.branding.logo = String(reader.result || '');
-          const liveName = input?.value.trim() || getBranch()?.name || DEFAULT_BRANDING_CONFIG.name;
-          paintBrandMark($('#storeLogoPreviewMark'), liveName, state.branding.logo || '');
+        try {
+          state.pendingLogo = await resizeLogo(picked);
+          const liveName = input?.value.trim() || getBrandingName();
+          paintBrandMark($('#storeLogoPreviewMark'), liveName, state.pendingLogo);
           toast('Logo cargado. Guarda para aplicar.', 'ok');
-        };
-        reader.readAsDataURL(picked);
+        } catch (err) {
+          file.value = '';
+          toast(err.message || 'No se pudo leer la imagen.', 'bad');
+        }
       });
     }
-    $('#btnSaveBranding')?.addEventListener('click', () => {
-      state.branding.name = input?.value.trim() || DEFAULT_BRANDING_CONFIG.name;
-      saveBrandingConfig();
-      applyBranding();
-      toast('Identidad de la tienda actualizada.');
+    $('#btnSaveBranding')?.addEventListener('click', async () => {
+      const branding = { name: input?.value.trim() || '' };
+      if (state.pendingLogo) branding.logo = state.pendingLogo;
+      try {
+        await saveSettings({ branding });
+        state.pendingLogo = '';
+        if (file) file.value = '';
+        toast('Identidad de la tienda actualizada para todos los clientes.');
+      } catch (err) { toast(err.message, 'bad'); }
     });
-    $('#btnResetBranding')?.addEventListener('click', () => {
-      state.branding = { ...DEFAULT_BRANDING_CONFIG };
-      if (input) input.value = state.branding.name;
-      if (file) file.value = '';
-      saveBrandingConfig();
-      applyBranding();
-      toast('Identidad restablecida.');
+    $('#btnResetBranding')?.addEventListener('click', async () => {
+      try {
+        state.pendingLogo = '';
+        if (file) file.value = '';
+        await saveSettings({ branding: { ...DEFAULT_BRANDING_CONFIG } });
+        if (input) input.value = '';
+        toast('Identidad restablecida.');
+      } catch (err) { toast(err.message, 'bad'); }
     });
     applyBranding();
   }
 
+  // Reduce el logo a 256 px como máximo para guardarlo liviano en la base de datos.
+  async function resizeLogo(fileObj) {
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(fileObj.type)) throw new Error('Usa un logo PNG, JPG, WEBP o GIF.');
+    const url = URL.createObjectURL(fileObj);
+    try {
+      const img = await new Promise((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = () => reject(new Error('Imagen inválida.')); i.src = url; });
+      const scale = Math.min(1, 256 / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      let data = canvas.toDataURL('image/webp', 0.9);
+      if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/png');
+      if (data.length > 380000) throw new Error('El logo es demasiado pesado incluso reducido.');
+      return data;
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  function syncClientConfigControls() {
+    $$('[data-config-field]').forEach(input => { input.checked = state.uiConfig?.[input.dataset.configField] !== false; });
+  }
+
   function bindClientConfigControls() {
-    const controls = $$('[data-config-field]');
-    controls.forEach(input => {
+    $$('[data-config-field]').forEach(input => {
       const key = input.dataset.configField;
-      input.checked = state.uiConfig?.[key] !== false;
-      input.addEventListener('change', () => {
+      input.addEventListener('change', async () => {
+        const previous = state.uiConfig[key];
         state.uiConfig[key] = input.checked;
-        saveClientConfig();
         applyCardVisibility();
-        toast('Vista cliente actualizada.');
+        try {
+          await saveSettings({ ui_config: { [key]: input.checked } });
+          toast('Vista cliente actualizada.');
+        } catch (err) {
+          state.uiConfig[key] = previous;
+          input.checked = previous !== false;
+          applyCardVisibility();
+          toast(err.message, 'bad');
+        }
       });
     });
+    syncClientConfigControls();
     applyCardVisibility();
   }
 
@@ -1857,44 +1885,25 @@
       renderMapping();
       $('#sheetStatus').textContent = `${state.headers.length} encabezados detectados`;
       $('#importLog').textContent = `Encabezados leídos desde ${data.source || 'Google Sheets'}. Filas detectadas: ${data.previewCount ?? '—'}`;
-      await saveSheetMetadata(false);
+      await saveSheetMetadata();
     } catch (err) {
       $('#importLog').textContent = err.message;
       toast(err.message, 'bad');
     }
   }
 
-  function mappedProducts(headers, rows) {
-    const index = new Map(headers.map((h,i) => [h, i]));
-    const get = (row, key) => {
-      const header = state.mapping[key];
-      const idx = index.get(header);
-      return idx == null ? '' : String(row[idx] ?? '').trim();
-    };
-    return rows.map((row, i) => {
-      const raw = {};
-      headers.forEach((h, idx) => raw[h] = String(row[idx] ?? '').trim());
-      const p = { id:`sheet-${i+1}`, raw };
-      for (const [key] of fields) p[key] = get(row, key);
-      if (!p.ubicacion) p.ubicacion = [p.zona, p.estante, p.nivel, p.slot].filter(Boolean).join('-');
-      return p;
-    }).filter(p => (p.nombre || p.sku || p.barras) && norm(p.nombre) !== 'producto');
-  }
-
-  async function saveSheetMetadata(withProducts, products = [], totalRows = 0) {
-    const body = {
+  function sheetConfigBody() {
+    return {
       sheet_id: $('#sheetUrl').value.trim(),
       sheet_name: $('#sheetName').value.trim() || 'Productos',
-      source_type: 'google_sheet',
       sheet_headers: state.headers,
       sheet_header_index: 0,
       sheet_map_rows: state.mapping
     };
-    if (withProducts) {
-      body.imported_products = products;
-      body.last_sheet_count = totalRows || products.length;
-    }
-    await api(`/branches/${state.branchId}/sheet`, { method:'POST', body: JSON.stringify(body) });
+  }
+
+  async function saveSheetMetadata() {
+    await api(`/branches/${state.branchId}/sheet-metadata`, { method:'POST', body: JSON.stringify(sheetConfigBody()) });
   }
 
   async function importSheet() {
@@ -1902,16 +1911,20 @@
     const url = $('#sheetUrl').value.trim();
     const sheet = $('#sheetName').value.trim() || 'Productos';
     if (!url) return toast('Coloca la URL del Sheet.', 'bad');
-    $('#importLog').textContent = 'Importando hasta 50,000 filas...';
+    const btn = $('#btnImportSheet');
+    if (btn) btn.disabled = true;
+    $('#importLog').textContent = 'Importando en el servidor (hasta 50,000 filas)...';
     try {
       if (!state.headers.length) await probeSheet();
-      const data = await api(`/sheets/rows?url=${encodeURIComponent(url)}&sheet=${encodeURIComponent(sheet)}&limit=50000`);
-      state.headers = data.headers || state.headers;
-      if (!Object.keys(state.mapping).length) state.mapping = autoMap(state.headers);
-      const products = mappedProducts(state.headers, data.rows || []);
-      await saveSheetMetadata(true, products, data.totalRows || products.length);
-      $('#sheetStatus').textContent = `${products.length} productos importados`;
-      $('#importLog').textContent = `Listo. Importados: ${products.length}\nFilas detectadas en Sheet: ${data.totalRows ?? products.length}\nFuente: ${data.source || 'Google Sheets'}`;
+      if (!Object.values(state.mapping || {}).some(Boolean)) state.mapping = autoMap(state.headers);
+      // El servidor lee el Sheet, aplica el mapeo y reemplaza el catálogo de forma atómica.
+      const data = await api(`/branches/${state.branchId}/import`, { method:'POST', body: JSON.stringify(sheetConfigBody()) });
+      if (Array.isArray(data.headers) && data.headers.length) state.headers = data.headers;
+      $('#sheetStatus').textContent = `${data.imported} productos importados`;
+      $('#importLog').textContent = `Listo. Importados: ${data.imported}\nFilas detectadas en Sheet: ${data.total_rows ?? data.imported}\nFuente: ${data.source || 'Google Sheets'}`;
+      state.categoryBrowserProducts = [];
+      state.categoryIndex = null;
+      resetCategoryCache();
       state.page = 1;
       await loadProducts();
       setView('catalog');
@@ -1919,6 +1932,8 @@
     } catch (err) {
       $('#importLog').textContent = err.message;
       toast(err.message, 'bad');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
@@ -1946,16 +1961,32 @@
     } catch (err) { toast(err.message, 'bad'); }
   }
 
-  async function generateViewerLink() {
+  async function generateViewerLink(rotate = false) {
     requireAdmin();
     if (!state.branchId) return toast('Selecciona una sucursal.', 'bad');
+    if (rotate && !window.confirm('El link actual dejará de funcionar para tus clientes. ¿Generar uno nuevo?')) return;
     try {
-      const data = await api(`/branches/${state.branchId}/view-link`, { method:'POST', body:'{}' });
+      const data = await api(`/branches/${state.branchId}/view-link`, { method:'POST', body: JSON.stringify({ rotate: !!rotate }) });
       $('#viewerLinkBox').textContent = data.url;
       await navigator.clipboard?.writeText(data.url).catch(() => null);
-      toast('Link cliente generado y copiado.');
+      toast(rotate ? 'Nuevo link generado y copiado. El anterior ya no funciona.' : 'Link cliente generado y copiado.');
       updateAdminChecklist();
       setView('settings');
+    } catch (err) { toast(err.message, 'bad'); }
+  }
+
+  async function changePassword() {
+    requireAdmin();
+    const current = $('#currentPassword')?.value || '';
+    const next = $('#newPassword')?.value || '';
+    const confirmValue = $('#confirmPassword')?.value || '';
+    if (!current || !next) return toast('Completa la contraseña actual y la nueva.', 'bad');
+    if (next !== confirmValue) return toast('La confirmación no coincide.', 'bad');
+    try {
+      await api('/password', { method:'POST', body: JSON.stringify({ current, next }) });
+      ['currentPassword','newPassword','confirmPassword'].forEach(id => { const el = $(`#${id}`); if (el) el.value = ''; });
+      if (state.auth) state.auth.weak_password = false;
+      toast('Contraseña actualizada. Se cerraron las demás sesiones.');
     } catch (err) { toast(err.message, 'bad'); }
   }
 

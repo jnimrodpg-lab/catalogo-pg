@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./assets/app.css?v=v58-persistent-gear" />
+  <link rel="stylesheet" href="/assets/app.css?v=v70-secure-sql" />
 </head>
 <body>
   <div class="client-app" id="appRoot">
@@ -282,6 +282,7 @@
           <div class="action-row">
             <button class="primary-btn" id="btnCreateBranch" type="button">Crear sucursal</button>
             <button class="ghost-btn" id="btnCopyViewer" type="button">Copiar link cliente</button>
+            <button class="ghost-btn danger-soft" id="btnRotateViewer" type="button" title="Invalida el link actual y crea uno nuevo">Regenerar link</button>
           </div>
           <div class="viewer-link-box" id="viewerLinkBox">Aún no se generó link.</div>
 
@@ -308,6 +309,19 @@
                 <label><input type="checkbox" data-config-field="precio"> Precio</label>
                 <label><input type="checkbox" data-config-field="request" checked> Solicitud / carrito</label>
               </div>
+            </div>
+          </div>
+
+          <div class="soft-card security-card">
+            <h3>Seguridad de la cuenta</h3>
+            <p class="muted small">Cambia la contraseña del administrador. Al guardarla se cierran las demás sesiones abiertas.</p>
+            <div class="form-grid three">
+              <label>Contraseña actual<input id="currentPassword" type="password" autocomplete="current-password" /></label>
+              <label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" /></label>
+              <label>Repetir nueva<input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" /></label>
+            </div>
+            <div class="action-row">
+              <button class="primary-btn" id="btnChangePassword" type="button">Cambiar contraseña</button>
             </div>
           </div>
         </div>
@@ -378,6 +392,6 @@
   </div>
 
   <div class="toast-stack" id="toastStack"></div>
-  <script src="./assets/app-main.js?v=v58-persistent-gear"></script>
+  <script src="/assets/app-main.js?v=v70-secure-sql"></script>
 </body>
 </html>

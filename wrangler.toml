@@ -2,14 +2,20 @@ name = "catalogo-pg"
 compatibility_date = "2026-03-31"
 pages_build_output_dir = "public"
 
+# La contraseña del admin inicial NO va aquí. Defínela como secreto:
+#   npx wrangler pages secret put ADMIN_PASSWORD
+# Solo se usa la primera vez, cuando la base está vacía.
 [vars]
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
 DEFAULT_COMPANY_NAME = "Catálogo Visual"
 DEFAULT_COMPANY_CODE = "CAT-CF"
-DB_NAME = "catalogo-pg-db"
+# "false" desactiva la creación pública de cuentas/empresas desde la pantalla de acceso.
+ALLOW_PUBLIC_REGISTER = "true"
+# Iteraciones de PBKDF2 para contraseñas (máx. 100000). Bájalo solo si el plan gratuito marca exceso de CPU al iniciar sesión.
+PBKDF2_ITERATIONS = "100000"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "catalogo-pg-db"
 database_id = "617b2188-448f-4474-9d92-e5a86957bbb0"
+migrations_dir = "migrations"
