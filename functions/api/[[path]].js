@@ -5,9 +5,9 @@ import {
   makeSessionCookie, rateLimit, readCookieSid, requireAdmin, requireAuth, verifyPassword
 } from '../../lib/auth.js';
 import { ensureSchema } from '../../lib/schema.js';
-import { DEFAULT_UI_CONFIG, getCatalogMeta, mapRowsToProducts, normalizeMapping, queryProducts, sanitizeFacets, storeProducts } from '../../lib/catalog.js';
+import { DEFAULT_UI_CONFIG, acquireLock, getCatalogMeta, releaseLock, mapRowsToProducts, normalizeMapping, queryProducts, sanitizeFacets, storeProducts } from '../../lib/catalog.js';
 import { driveIdFrom, fetchSheetMeta, parseSheetId, proxyDriveVideo, readSheet } from '../../lib/sheets.js';
-import { getSettings, saveSettings } from '../../lib/settings.js';
+import { getSettings, publicSettings, saveSettings } from '../../lib/settings.js';
 
 const routes = [];
 const route = (method, pattern, handler) => routes.push({ method, pattern, handler });
@@ -33,7 +33,7 @@ export async function onRequest(context) {
     for (const r of routes) {
       if (r.method !== request.method) continue;
       const match = typeof r.pattern === 'string' ? (r.pattern === path ? [] : null) : path.match(r.pattern);
-      if (match) return await r.handler({ request, env, db, url, match });
+      if (match) return await r.handler({ request, env, db, url, match, waitUntil: (p) => (context.waitUntil ? context.waitUntil(p) : p) });
     }
     return fail(404, 'No encontrado');
   } catch (err) {
@@ -140,8 +140,9 @@ function productQueryOptions(url) {
   };
 }
 
-async function productsResponse(db, branchId, url, isAdmin, cfg) {
+async function productsResponse(db, branchId, url, isAdmin, cfg, sync = null) {
   const meta = await getCatalogMeta(db, branchId);
+  if (sync) await maybeAutoSync(db, branchId, meta, sync);
   const opts = productQueryOptions(url);
   const result = await queryProducts(db, { branchId, ...opts, isAdmin, cfg });
   return json({
@@ -156,6 +157,54 @@ async function productsResponse(db, branchId, url, isAdmin, cfg) {
 async function catalogIndexResponse(db, branchId) {
   const meta = await getCatalogMeta(db, branchId);
   return json({ ok: true, ...meta.index });
+}
+
+// ---------- Importación desde Google Sheet ----------
+
+/** Lee el Sheet configurado, aplica el mapeo y reemplaza el catálogo. `overrides` viene del panel admin. */
+async function importBranchFromSheet(db, branchId, overrides = {}, { lockHeld = false } = {}) {
+  const merged = mergeSheetBody(await readSheetConfig(db, branchId), overrides);
+  if (!parseSheetId(merged.sheet_id)) throw new HttpError(400, 'Coloca una URL de Google Sheet válida');
+  const mapping = normalizeMapping(merged.sheet_map_rows);
+  if (!Object.values(mapping).some(Boolean)) throw new HttpError(400, 'Primero lee los encabezados y mapea las columnas');
+  const sheet = await readSheet(merged.sheet_id, merged.sheet_name || 'Productos', 50000);
+  const stats = {};
+  const products = mapRowsToProducts(sheet.headers, sheet.rows, mapping, stats, sheet.headerIndex + 2);
+  await writeSheetConfig(db, branchId, { ...merged, sheet_headers: sheet.headers, sheet_header_index: sheet.headerIndex });
+  const stored = await storeProducts(db, branchId, products, { lockHeld });
+  const mapped = Object.fromEntries(['nombre', 'sku', 'barras'].map((k) => [k, mapping[k] || '']));
+  return { imported: stored, total_rows: sheet.totalRows, source: sheet.source, headers: sheet.headers, stats, id_columns: mapped };
+}
+
+const SYNC_RETRY_MS = 30 * 60 * 1000;
+
+/**
+ * Sincronización automática sin cron: si el catálogo tiene más de `sync_hours` horas,
+ * la consulta que lo detecta lanza la reimportación en segundo plano (no hace esperar al cliente).
+ */
+async function maybeAutoSync(db, branchId, meta, { companyId, waitUntil }) {
+  const hours = Number((await getSettings(db, companyId)).business.sync_hours || 0);
+  if (!hours || !waitUntil) return;
+  const age = meta.importedAt ? Date.now() - Date.parse(meta.importedAt) : Infinity;
+  if (age < hours * 3600000) return;
+  const attemptKey = `sync_attempt:${branchId}`;
+  const last = await first(db.prepare('SELECT value FROM system_meta WHERE key = ?').bind(attemptKey));
+  if (last && Date.now() - Number(last.value) < SYNC_RETRY_MS) return;
+  const cfg = await readSheetConfig(db, branchId);
+  if (!parseSheetId(cfg.sheet_id)) return;
+  await db.prepare(`INSERT INTO system_meta (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`).bind(attemptKey, String(Date.now())).run();
+  waitUntil((async () => {
+    if (!(await acquireLock(db, `import:${branchId}`))) return;
+    try {
+      const result = await importBranchFromSheet(db, branchId, {}, { lockHeld: true });
+      console.log(`Sincronización automática sucursal ${branchId}: ${result.imported} productos`);
+    } catch (err) {
+      console.error(`Sincronización automática falló (sucursal ${branchId})`, err?.message || err);
+    } finally {
+      await releaseLock(db, `import:${branchId}`);
+    }
+  })());
 }
 
 // ---------- Sistema ----------
@@ -293,7 +342,8 @@ route('POST', '/password', async ({ request, env, db }) => {
 route('GET', '/settings', async ({ request, db }) => {
   const session = await requireAuth(request, db);
   if (session.error) return session.error;
-  return json({ ok: true, ...(await getSettings(db, session.company_id)) });
+  const settings = await getSettings(db, session.company_id);
+  return json({ ok: true, ...(session.role === 'admin' ? settings : publicSettings(settings)) });
 });
 
 route('PUT', '/settings', async ({ request, db }) => {
@@ -481,7 +531,8 @@ route('GET', /^\/branches\/(\d+)\/sheet$/, async ({ request, db, match }) => {
       sheet_map_rows: safeJsonParse(cfg.sheet_map_json, {}),
       sheet_headers: safeJsonParse(cfg.sheet_headers_json, []),
       sheet_header_index: Number(cfg.sheet_header_index || 0),
-      last_sheet_count: meta.count
+      last_sheet_count: meta.count,
+      last_import_at: meta.importedAt
     }
   });
 });
@@ -505,18 +556,8 @@ route('POST', /^\/branches\/(\d+)\/import$/, async ({ request, db, match }) => {
   if (session.error) return session.error;
   const branch = await ownedBranchOr404(db, session, Number(match[1]));
   await ensureBranchScaffolding(db, branch.id, branch.canvas_width, branch.canvas_height);
-  const body = await readJson(request);
-  const merged = mergeSheetBody(await readSheetConfig(db, branch.id), body);
-  if (!parseSheetId(merged.sheet_id)) return fail(400, 'Coloca una URL de Google Sheet válida');
-
-  const sheet = await readSheet(merged.sheet_id, merged.sheet_name || 'Productos', 50000);
-  const mapping = normalizeMapping(merged.sheet_map_rows);
-  if (!Object.values(mapping).some(Boolean)) return fail(400, 'Primero lee los encabezados y mapea las columnas');
-  const products = mapRowsToProducts(sheet.headers, sheet.rows, mapping);
-
-  await writeSheetConfig(db, branch.id, { ...merged, sheet_headers: sheet.headers, sheet_header_index: sheet.headerIndex });
-  const stored = await storeProducts(db, branch.id, products);
-  return json({ ok: true, imported: stored, total_rows: sheet.totalRows, source: sheet.source, headers: sheet.headers });
+  const result = await importBranchFromSheet(db, branch.id, await readJson(request));
+  return json({ ok: true, ...result });
 });
 
 route('GET', '/sheets/meta', async ({ request, db, url }) => {
@@ -544,13 +585,13 @@ route('GET', '/sheets/rows', async ({ request, db, url }) => {
 
 // ---------- Productos (sesión) ----------
 
-route('GET', /^\/branches\/(\d+)\/products$/, async ({ request, db, url, match }) => {
+route('GET', /^\/branches\/(\d+)\/products$/, async ({ request, db, url, match, waitUntil }) => {
   const session = await requireAuth(request, db);
   if (session.error) return session.error;
   const branch = await ownedBranchOr404(db, session, Number(match[1]));
   const isAdmin = session.role === 'admin';
   const cfg = isAdmin ? DEFAULT_UI_CONFIG : (await getSettings(db, session.company_id)).ui_config;
-  return productsResponse(db, branch.id, url, isAdmin, cfg);
+  return productsResponse(db, branch.id, url, isAdmin, cfg, { companyId: session.company_id, waitUntil });
 });
 
 route('GET', /^\/branches\/(\d+)\/products-summary$/, async ({ request, db, match }) => {
@@ -596,7 +637,7 @@ route('GET', /^\/view-links\/([^/]+)$/, async ({ db, match }) => {
   return json({
     ok: true,
     branch: { id: Number(link.branch_id), name: link.branch_name },
-    settings,
+    settings: publicSettings(settings),
     sheet: {
       product_count: meta.count,
       facets: sanitizeFacets(meta.facets, settings.ui_config),
@@ -605,10 +646,10 @@ route('GET', /^\/view-links\/([^/]+)$/, async ({ db, match }) => {
   });
 });
 
-route('GET', /^\/view-links\/([^/]+)\/products$/, async ({ db, url, match }) => {
+route('GET', /^\/view-links\/([^/]+)\/products$/, async ({ db, url, match, waitUntil }) => {
   const link = await publicLinkOr404(db, match[1]);
   const cfg = (await getSettings(db, link.company_id)).ui_config;
-  return productsResponse(db, link.branch_id, url, false, cfg);
+  return productsResponse(db, link.branch_id, url, false, cfg, { companyId: link.company_id, waitUntil });
 });
 
 route('GET', /^\/view-links\/([^/]+)\/catalog-index$/, async ({ db, match }) => {

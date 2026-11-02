@@ -25,6 +25,11 @@
   function applySettings(settings) {
     state.uiConfig = { ...DEFAULT_UI_CONFIG, ...(settings?.ui_config || {}) };
     state.branding = { ...DEFAULT_BRANDING_CONFIG, ...(settings?.branding || {}) };
+    state.business = { whatsapp:'', sync_hours:0, ...(settings?.business || {}) };
+    const wa = $('#storeWhatsapp');
+    if (wa && document.activeElement !== wa) wa.value = state.business.whatsapp || '';
+    const sync = $('#syncHours');
+    if (sync) sync.value = String(state.business.sync_hours || 0);
     syncClientConfigControls();
     applyCardVisibility();
     applyBranding();
@@ -290,6 +295,7 @@
     $('#btnCopyViewer').addEventListener('click', () => generateViewerLink(false));
     $('#btnRotateViewer')?.addEventListener('click', () => generateViewerLink(true));
     $('#btnChangePassword')?.addEventListener('click', changePassword);
+    $('#syncHours')?.addEventListener('change', saveSyncHours);
     $('#btnOpenProductViewer')?.addEventListener('click', e => { e.stopPropagation(); openActiveProductCard(); });
     $('#activeProductCard')?.addEventListener('click', e => {
       if (e.target.closest('button, select, input, textarea, a, video, iframe')) return;
@@ -529,6 +535,7 @@
       state.headers = cfg.sheet_headers || [];
       state.mapping = normalizeMapping(cfg.sheet_map_rows || cfg.mapping || {});
       $('#sheetStatus').textContent = state.headers.length ? `${state.headers.length} encabezados · ${Number(cfg.last_sheet_count || 0)} productos` : 'Sin encabezados';
+      renderLastImport(cfg.last_import_at);
       renderMapping();
     } catch (err) {
       $('#sheetStatus').textContent = err.message;
@@ -866,6 +873,7 @@
     const pushFilter = (type, label, value, style='') => { if (value) filters.push({ type, label, value, style }); };
     pushFilter('brand', 'Marca', $('#filterBrand')?.value || '');
     pushFilter('category', 'Categoría', $('#filterCategory')?.value || '');
+    if (state.categoryAudienceFilter) pushFilter('audience', 'Público', audienceLabel(state.categoryAudienceFilter));
     pushFilter('size', 'Talla', state.variantFilters.size || '');
     pushFilter('color', 'Color', state.variantFilters.color || '', chipStyle(state.variantFilters.color || ''));
     if (!filters.length) {
@@ -880,6 +888,7 @@
     const resetters = {
       brand: () => $('#filterBrand') && ($('#filterBrand').value = ''),
       category: () => { if ($('#filterCategory')) $('#filterCategory').value = ''; state.categoryAudienceFilter = ''; },
+      audience: () => { state.categoryAudienceFilter = ''; },
       size: () => state.variantFilters.size = '',
       color: () => state.variantFilters.color = ''
     };
@@ -1097,6 +1106,15 @@
     return '';
   }
 
+  function displayName(product) {
+    const sku = val(product,'sku') || val(product,'barras');
+    return val(product,'nombre')
+      || [val(product,'marca'), val(product,'variante') || (sku ? `SKU ${sku}` : '')].filter(Boolean).join(' · ')
+      || 'Producto sin nombre';
+  }
+
+  function plural(n, one, many) { return n ? `${n} ${n === 1 ? one : many}` : `— ${many}`; }
+
   function mediaUrl(product) { return val(product,'imagen') || val(product,'video'); }
   function videoUrl(product) { return val(product,'video'); }
 
@@ -1170,7 +1188,7 @@
         ...preferred,
         _grouped: true,
         _groupKey: key,
-        _groupName: val(preferred,'nombre') || 'Sin nombre',
+        _groupName: displayName(preferred),
         _groupItems: items,
         _variantCount: items.length,
         _sizeOptions: uniqueValues(items, 'talla'),
@@ -1198,7 +1216,7 @@
       const locs = p._locationOptions?.length ? p._locationOptions : uniqueValues(p._groupItems || [p], 'ubicacion');
       const whs = p._warehouseOptions?.length ? p._warehouseOptions : uniqueValues(p._groupItems || [p], 'almacen');
       const skuLabel = (p._skuOptions?.[0] || val(p,'sku') || val(p,'barras') || '—');
-      const title = p._groupName || val(p,'nombre') || 'Sin nombre';
+      const title = p._groupName || displayName(p);
       const subtitle = [val(p,'marca'), val(p,'categoria')].filter(Boolean).join(' · ');
       return `
       <div class="product-row product-family-row model-one-row" data-index="${idx}" tabindex="0" title="Seleccionar producto agrupado">
@@ -1207,7 +1225,7 @@
           <div class="group-info">
             <strong>${esc(title)}</strong>
             <small>${esc(subtitle || `SKU ${skuLabel}`)}</small>
-            <span class="group-location-mini">${esc(`${sizes.length || '—'} tallas · ${colors.length || '—'} colores`)}</span>
+            <span class="group-location-mini">${esc(`${plural(sizes.length, 'talla', 'tallas')} · ${plural(colors.length, 'color', 'colores')}`)}</span>
             <em class="group-open-label">Ver producto →</em>
           </div>
         </div>
@@ -1369,7 +1387,7 @@
       return;
     }
     $('#activeProductMedia').innerHTML = renderMedia(product, 'featured');
-    $('#activeProductName').textContent = val(product,'nombre') || 'Sin nombre';
+    $('#activeProductName').textContent = displayName(product);
     $('#activeProductSku').textContent = `SKU ${val(product,'sku') || val(product,'barras') || '—'}`;
     $('#activeProductLocation').textContent = val(product,'ubicacion') || [product.zona, product.estante, product.nivel, product.slot].filter(Boolean).join(' · ') || '—';
     $('#activeProductWarehouse').textContent = val(product,'almacen') || '—';
@@ -1389,7 +1407,7 @@
     const p = state.selected;
     if (!p) return toast('Selecciona un producto primero.', 'bad');
     const text = [
-      val(p,'nombre') || 'Sin nombre',
+      displayName(p),
       `SKU: ${val(p,'sku') || '—'}`,
       `Marca: ${val(p,'marca') || '—'}`,
       `Talla: ${val(p,'talla') || '—'}`,
@@ -1419,7 +1437,7 @@
     }
     state.requestItems.push({
       key,
-      nombre: val(p,'nombre') || 'Sin nombre',
+      nombre: displayName(p),
       sku: val(p,'sku') || val(p,'barras') || '',
       marca: val(p,'marca') || '',
       categoria: val(p,'categoria') || '',
@@ -1477,7 +1495,8 @@
 
   function requestCartText() {
     const items = state.requestItems || [];
-    return ['Hola, quiero solicitar estos productos:', ...items.map((item, i) => `${i + 1}. ${item.nombre}${item.sku ? ` · SKU ${item.sku}` : ''}${item.talla ? ` · Talla ${item.talla}` : ''}${item.color ? ` · Color ${item.color}` : ''}`)].join('\n');
+    const store = String(state.branding?.name || '').trim();
+    return [`Hola${store ? ` ${store}` : ''}, quiero solicitar estos productos:`, ...items.map((item, i) => `${i + 1}. ${item.nombre}${item.sku ? ` · SKU ${item.sku}` : ''}${item.talla ? ` · Talla ${item.talla}` : ''}${item.color ? ` · Color ${item.color}` : ''}`)].join('\n');
   }
 
   function openRequestDrawer() {
@@ -1507,7 +1526,9 @@
 
   function sendRequestCart() {
     if (!(state.requestItems || []).length) return toast('Agrega productos primero.', 'bad');
-    window.open(`https://wa.me/?text=${encodeURIComponent(requestCartText())}`, '_blank', 'noopener,noreferrer');
+    // Si el dueño configuró su número, la solicitud le llega directo; si no, el cliente elige el contacto.
+    const number = String(state.business?.whatsapp || '').replace(/\D/g, '');
+    window.open(`https://wa.me/${number}?text=${encodeURIComponent(requestCartText())}`, '_blank', 'noopener,noreferrer');
     toast('Solicitud lista para enviar.');
   }
 
@@ -1595,7 +1616,7 @@
       const branding = { name: input?.value.trim() || '' };
       if (state.pendingLogo) branding.logo = state.pendingLogo;
       try {
-        await saveSettings({ branding });
+        await saveSettings({ branding, business: { whatsapp: $('#storeWhatsapp')?.value || '' } });
         state.pendingLogo = '';
         if (file) file.value = '';
         toast('Identidad de la tienda actualizada para todos los clientes.');
@@ -1708,7 +1729,7 @@
     if (!product) { el.classList.remove('visible'); return; }
     el.querySelector('.side-nav-kicker').textContent = side === 'left' ? 'Anterior' : 'Siguiente';
     el.querySelector('.side-nav-media').innerHTML = renderMedia(product, 'card');
-    el.querySelector('.side-nav-title').textContent = val(product,'nombre') || 'Sin nombre';
+    el.querySelector('.side-nav-title').textContent = displayName(product);
     el.querySelector('.side-nav-sku').textContent = `SKU ${val(product,'sku') || '—'}`;
     el.querySelector('.side-nav-value').textContent = val(product,'ubicacion') || '—';
     el.onclick = e => { e.preventDefault(); e.stopPropagation(); selectProduct(product); };
@@ -1921,7 +1942,8 @@
       const data = await api(`/branches/${state.branchId}/import`, { method:'POST', body: JSON.stringify(sheetConfigBody()) });
       if (Array.isArray(data.headers) && data.headers.length) state.headers = data.headers;
       $('#sheetStatus').textContent = `${data.imported} productos importados`;
-      $('#importLog').textContent = `Listo. Importados: ${data.imported}\nFilas detectadas en Sheet: ${data.total_rows ?? data.imported}\nFuente: ${data.source || 'Google Sheets'}`;
+      renderLastImport(new Date().toISOString());
+      $('#importLog').textContent = importReport(data);
       state.categoryBrowserProducts = [];
       state.categoryIndex = null;
       resetCategoryCache();
@@ -1973,6 +1995,44 @@
       updateAdminChecklist();
       setView('settings');
     } catch (err) { toast(err.message, 'bad'); }
+  }
+
+  // Explica la diferencia entre filas del Sheet y productos importados.
+  function importReport(data) {
+    const st = data.stats || {};
+    const cols = data.id_columns || {};
+    const lines = [
+      `Listo. Productos importados: ${data.imported}`,
+      `Filas con datos leídas del Sheet: ${data.total_rows ?? st.read ?? data.imported} (fuente: ${data.source || 'Google Sheets'})`
+    ];
+    if (st.skipped_no_id) {
+      const used = [cols.nombre && `Nombre → “${cols.nombre}”`, cols.sku && `SKU → “${cols.sku}”`, cols.barras && `Código de barras → “${cols.barras}”`].filter(Boolean).join(', ') || 'ninguna columna mapeada';
+      lines.push(`Omitidas sin nombre, SKU ni código de barras: ${st.skipped_no_id} (ej. filas ${(st.examples_no_id || []).join(', ')}). Columnas usadas: ${used}.`);
+    }
+    if (st.skipped_header) lines.push(`Omitidas por ser encabezados repetidos: ${st.skipped_header}`);
+    if (Number(data.total_rows) > 50000) lines.push('Atención: el Sheet supera 50.000 filas; solo se importan las primeras 50.000.');
+    return lines.join('\n');
+  }
+
+  function renderLastImport(iso) {
+    const el = $('#lastImportAt');
+    if (!el) return;
+    const date = iso ? new Date(iso) : null;
+    el.textContent = date && !Number.isNaN(date.getTime())
+      ? `Última importación: ${date.toLocaleString('es-PE', { dateStyle:'medium', timeStyle:'short' })}`
+      : 'Última importación: —';
+  }
+
+  async function saveSyncHours() {
+    const select = $('#syncHours');
+    const previous = String(state.business?.sync_hours || 0);
+    try {
+      await saveSettings({ business: { sync_hours: Number(select.value) } });
+      toast(Number(select.value) ? 'Sincronización automática activada.' : 'Sincronización automática desactivada.');
+    } catch (err) {
+      select.value = previous;
+      toast(err.message, 'bad');
+    }
   }
 
   async function changePassword() {

@@ -1,5 +1,25 @@
 # Historial de cambios
 
+## v73 — Informe de importación
+- Al importar se muestra cuántas filas se leyeron del Sheet, cuántas se importaron y cuántas se omitieron y por qué (sin nombre/SKU/código de barras, o encabezados repetidos), con ejemplos de número de fila y las columnas usadas para identificar productos.
+- Probado con un Sheet de 10.000 filas: importación completa y consultas en ~15 ms (entorno local).
+
+## v72 — Sincronización automática y WhatsApp del negocio
+- **Sincronización automática del Sheet** (Vincular Sheet → Sincronización automática: cada 1, 3, 6, 12 o 24 h). Pages no tiene tareas programadas, así que la consulta que detecta un catálogo vencido lanza la reimportación en segundo plano (`waitUntil`): el visitante no espera. Si el Sheet falla, se reintenta a los 30 minutos.
+- Se muestra la fecha de la última importación.
+- **WhatsApp del negocio** (Configuración → Identidad): la solicitud del cliente llega directo a ese número y saluda con el nombre de la tienda.
+- **Búsqueda del cliente sin ubicación ni almacén**: los clientes ya no encuentran productos escribiendo un código de ubicación (salvo que el dueño haga visibles esos campos).
+- Chip "Público: Mujer/Niño…" en los filtros aplicados, con su ×.
+- **Reindexado automático**: cuando cambia la forma de indexar, cada catálogo se reindexa solo desde sus productos guardados, sin volver a leer el Sheet ni cambiar la fecha de importación. Así las correcciones de v71 se aplican sin reimportar.
+- Bloqueo por sucursal: dos importaciones a la vez ya no compiten; la segunda recibe "importación en curso".
+- Las celdas con el nombre del campo como valor ("Color", "Talla"…) también se limpian al reindexar.
+
+## v71 — Correcciones de datos
+- Los productos sin nombre ya no aparecen primero: van al final y se muestran como "Marca · SKU …" en vez de "Sin nombre".
+- Las celdas que repiten el nombre de su columna (p. ej. "Color" en la columna Color) se ignoran al importar; también las filas de encabezado repetidas dentro del Sheet.
+- Textos en singular cuando corresponde ("1 talla · 1 color").
+- La API usaba 1 resultado por página si no se enviaba `limit`; ahora usa el valor por defecto.
+
 ## v70 — Seguridad, configuración en servidor y consultas SQL
 
 ### Seguridad

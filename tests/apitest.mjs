@@ -93,6 +93,36 @@ const token2 = r.data.token;
 r = await anon(`/view-links/${token}`);
 ok(token2 !== token && r.status === 404, 'regenerar link invalida el anterior');
 
+// v72: búsqueda pública sin ubicación
+r = await admin(`/branches/${branchId}/products?group_by=name&q=Z1-R`);
+const adminLoc = r.data.total;
+r = await anon(`/view-links/${token2}/products?group_by=name&q=Z1-R`);
+ok(adminLoc > 0 && r.data.total === 0, 'el cliente no encuentra productos por ubicación', { adminLoc, pub: r.data.total });
+r = await anon(`/view-links/${token2}/products?group_by=name&q=casaca`);
+ok(r.data.total === 60, 'el cliente sí busca por nombre');
+
+// v72: WhatsApp y sincronización
+r = await admin('/settings', { method: 'PUT', body: JSON.stringify({ business: { whatsapp: '123' } }) });
+ok(r.status === 400, 'rechaza WhatsApp inválido');
+r = await admin('/settings', { method: 'PUT', body: JSON.stringify({ business: { whatsapp: '+51 987 654 321', sync_hours: 6 } }) });
+ok(r.status === 200 && r.data.business.whatsapp === '51987654321' && r.data.business.sync_hours === 6, 'guarda WhatsApp y frecuencia');
+r = await admin('/settings', { method: 'PUT', body: JSON.stringify({ business: { sync_hours: 5 } }) });
+ok(r.status === 400, 'rechaza frecuencia no permitida');
+r = await anon(`/view-links/${token2}`);
+ok(r.data.settings.business.whatsapp === '51987654321' && r.data.settings.business.sync_hours === undefined, 'el cliente ve el WhatsApp pero no la sincronización');
+r = await admin(`/branches/${branchId}/sheet`);
+ok(!!r.data.config.last_import_at, 'fecha de última importación');
+
+// v72: dos importaciones a la vez no dejan el catálogo a medias
+const body = JSON.stringify({ sheet_map_rows: mapping });
+const [i1, i2] = await Promise.all([
+  admin(`/branches/${branchId}/import`, { method: 'POST', body }),
+  admin(`/branches/${branchId}/import`, { method: 'POST', body })
+]);
+ok([i1.status, i2.status].includes(200) && [i1.status, i2.status].every((st) => st === 200 || st === 409), 'importaciones simultáneas: una espera (409)', [i1.status, i2.status]);
+r = await admin(`/branches/${branchId}/products?group_by=name`);
+ok(r.data.group_total_products === 3000, 'catálogo íntegro tras importaciones simultáneas', r.data.group_total_products);
+
 // Accesos anónimos y viewer
 r = await anon('/app-state');
 ok(r.status === 401, 'app-state exige sesión');

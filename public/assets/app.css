@@ -4883,3 +4883,7 @@ body.viewer-mode:not(.public-viewer) .sidebar.admin-config-panel #sessionPill{
   }
   html body #expandedSideCard-left, html body #expandedSideCard-right { display: none !important; }
 }
+
+/* v72: sincronización automática */
+.sync-row{align-items:end;margin-top:6px}
+.sync-status{padding:12px 4px}

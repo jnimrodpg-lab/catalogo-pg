@@ -41,7 +41,7 @@ Con Cloudflare: `npm install && npm run dev`.
 Sin Cloudflare (Node 22+, sin dependencias): servidor con D1 simulado sobre SQLite y un Sheet de ejemplo con 3.000 filas.
 ```bash
 npm run test:server      # http://localhost:8788  (admin / admin123)
-npm run test:api         # en otra terminal: 47 pruebas de la API
+npm run test:api         # en otra terminal: 56 pruebas de la API
 ```
 
 ## API principal
@@ -49,7 +49,7 @@ npm run test:api         # en otra terminal: 47 pruebas de la API
 | Método y ruta | Acceso |
 |---|---|
 | `POST /api/login`, `/viewer-login`, `/register`, `/logout`, `/password` | — |
-| `GET/PUT /api/settings` | sesión / admin |
+| `GET/PUT /api/settings` (`ui_config`, `branding`, `business.whatsapp`, `business.sync_hours`) | sesión / admin |
 | `GET /api/branches` · `POST` · `PUT/DELETE /api/branches/:id` | sesión / admin |
 | `GET /api/branches/:id/products?q=&brand=&category=&size=&color=&audience=&page=&limit=&group_by=name` | sesión |
 | `GET /api/branches/:id/catalog-index` | sesión |
@@ -57,5 +57,9 @@ npm run test:api         # en otra terminal: 47 pruebas de la API
 | `POST /api/branches/:id/view-link` (`{"rotate":true}` para regenerar) | admin |
 | `GET /api/view-links/:token`, `/products`, `/catalog-index` | público |
 | `GET /api/sheets/probe?url=&sheet=` | admin |
+
+## Sincronización automática
+
+En *Vincular Sheet* elige la frecuencia. Cuando alguien abre el catálogo y la última importación es más antigua que esa frecuencia, el servidor reimporta en segundo plano. Si nadie visita el catálogo, no se sincroniza (no hay costo); la próxima visita lo actualiza. El cliente que dispara la sincronización ve todavía los datos anteriores; los siguientes ven los nuevos.
 
 Historial: ver [CHANGELOG.md](CHANGELOG.md).

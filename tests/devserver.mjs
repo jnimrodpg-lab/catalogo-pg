@@ -54,6 +54,7 @@ globalThis.fetch = async (input, init) => {
 };
 
 const env = { DB, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin123', DEFAULT_COMPANY_NAME: 'Catálogo Visual', DEFAULT_COMPANY_CODE: 'CAT-CF' };
+export const pending = [];
 const api = await import(pathToFileURL(path.join(root, 'functions/api/[[path]].js')).href);
 
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -66,7 +67,7 @@ http.createServer(async (req, res) => {
     const body = chunks.length ? Buffer.concat(chunks) : undefined;
     const request = new Request(url, { method: req.method, headers: req.headers, body: ['GET', 'HEAD'].includes(req.method) ? undefined : body });
     const segs = url.pathname.slice(5).split('/').filter(Boolean);
-    const response = await api.onRequest({ request, env, params: { path: segs } });
+    const response = await api.onRequest({ request, env, params: { path: segs }, waitUntil: (p) => { pending.push(Promise.resolve(p).catch(() => null)); } });
     const headers = {};
     response.headers.forEach((v, k) => { if (k !== 'set-cookie') headers[k] = v; });
     const cookies = response.headers.getSetCookie?.() || [];
