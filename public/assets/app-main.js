@@ -2060,6 +2060,17 @@
 
   function openAdminPanel() {
     if (state.publicMode) return;
+    // Un viewer (o alguien sin sesión) no tiene panel: se le ofrece entrar como administrador.
+    if (!isAdmin()) {
+      state.adminPanelOpen = false;
+      applyAdminPanelState();
+      setAuthMode('login');
+      setLoginAccessMode('admin');
+      $('#authModal').classList.add('show');
+      $('#authStatus').textContent = 'Ingresa con tu usuario administrador para ver los ajustes.';
+      setTimeout(() => $('#loginUsername')?.focus(), 50);
+      return;
+    }
     state.adminPanelOpen = true;
     applyAdminPanelState();
   }

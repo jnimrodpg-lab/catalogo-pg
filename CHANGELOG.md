@@ -1,5 +1,8 @@
 # Historial de cambios
 
+## v74 — Ajustes desde modo visualizador
+- Si un visualizador (o alguien sin sesión) pulsa ⚙ Ajustes, ahora se abre el acceso de administrador en vez de oscurecer la pantalla sin mostrar nada. Al ingresar como admin, la sesión de visualizador se reemplaza.
+
 ## v73 — Informe de importación
 - Al importar se muestra cuántas filas se leyeron del Sheet, cuántas se importaron y cuántas se omitieron y por qué (sin nombre/SKU/código de barras, o encabezados repetidos), con ejemplos de número de fila y las columnas usadas para identificar productos.
 - Probado con un Sheet de 10.000 filas: importación completa y consultas en ~15 ms (entorno local).
