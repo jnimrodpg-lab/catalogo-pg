@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## v75 — Productos descontinuados "( D )"
+- Un nombre que termina en "(D)" / "( D )" se interpreta como variante **descontinuada**: se quita la marca del nombre y se une a la familia del producto vigente (antes salían como dos familias).
+- Etiqueta "Descontinuado" en la ficha cuando la variante elegida lo está, en la lista cuando toda la familia lo está, y tallas/colores que solo existen como descontinuados aparecen tachados.
+- La solicitud por WhatsApp indica "(descontinuado)" en esas líneas.
+- Configuración → Vista exclusiva del cliente → "Productos descontinuados": desmarcado, los clientes no los ven (el admin siempre sí).
+- El catálogo existente se reindexa solo (no hace falta reimportar).
+
 ## v74 — Ajustes desde modo visualizador
 - Si un visualizador (o alguien sin sesión) pulsa ⚙ Ajustes, ahora se abre el acceso de administrador en vez de oscurecer la pantalla sin mostrar nada. Al ingresar como admin, la sesión de visualizador se reemplaza.
 

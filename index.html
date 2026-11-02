@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./assets/app.css?v=v58-persistent-gear" />
+  <link rel="stylesheet" href="/assets/app.css?v=v75-descontinuados" />
 </head>
 <body>
   <div class="client-app" id="appRoot">
@@ -153,6 +153,7 @@
                   <div>
                     <div class="search-card-title" id="activeProductName">Busca o selecciona un producto</div>
                     <div class="search-card-sku" id="activeProductSku" data-card-field="sku">SKU —</div>
+                    <span class="disc-badge hidden" id="activeProductDisc" title="Este producto ya no se repone: quedan las unidades en stock">Descontinuado</span>
                   </div>
                 </div>
                 <div class="search-card-meta">
@@ -240,6 +241,20 @@
             <button class="primary-btn" id="btnImportSheet" type="button">Importar productos</button>
           </div>
 
+          <div class="form-grid two sync-row">
+            <label>Sincronización automática
+              <select id="syncHours">
+                <option value="0">Desactivada (importo manualmente)</option>
+                <option value="1">Cada 1 hora</option>
+                <option value="3">Cada 3 horas</option>
+                <option value="6">Cada 6 horas</option>
+                <option value="12">Cada 12 horas</option>
+                <option value="24">Una vez al día</option>
+              </select>
+            </label>
+            <div class="sync-status muted small" id="lastImportAt">Última importación: —</div>
+          </div>
+
           <div class="mapping-panel" id="mappingPanel"></div>
           <div class="import-log" id="importLog"></div>
         </div>
@@ -260,6 +275,7 @@
             <div class="form-grid two brand-settings-grid">
               <label>Nombre de la empresa / tienda<input id="storeDisplayName" placeholder="Ej. Premium Commerce" /></label>
               <label>Logo de la tienda<input id="storeLogoFile" type="file" accept="image/*" /></label>
+              <label>WhatsApp que recibe las solicitudes<input id="storeWhatsapp" inputmode="tel" placeholder="51987654321 (con código de país)" /></label>
             </div>
             <div class="brand-preview-row">
               <div class="brand-mark brand-preview-mark" id="storeLogoPreviewMark">C</div>
@@ -282,6 +298,7 @@
           <div class="action-row">
             <button class="primary-btn" id="btnCreateBranch" type="button">Crear sucursal</button>
             <button class="ghost-btn" id="btnCopyViewer" type="button">Copiar link cliente</button>
+            <button class="ghost-btn danger-soft" id="btnRotateViewer" type="button" title="Invalida el link actual y crea uno nuevo">Regenerar link</button>
           </div>
           <div class="viewer-link-box" id="viewerLinkBox">Aún no se generó link.</div>
 
@@ -307,7 +324,21 @@
                 <label><input type="checkbox" data-config-field="stock"> Stock</label>
                 <label><input type="checkbox" data-config-field="precio"> Precio</label>
                 <label><input type="checkbox" data-config-field="request" checked> Solicitud / carrito</label>
+                <label><input type="checkbox" data-config-field="descontinuados" checked> Productos descontinuados</label>
               </div>
+            </div>
+          </div>
+
+          <div class="soft-card security-card">
+            <h3>Seguridad de la cuenta</h3>
+            <p class="muted small">Cambia la contraseña del administrador. Al guardarla se cierran las demás sesiones abiertas.</p>
+            <div class="form-grid three">
+              <label>Contraseña actual<input id="currentPassword" type="password" autocomplete="current-password" /></label>
+              <label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" /></label>
+              <label>Repetir nueva<input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" /></label>
+            </div>
+            <div class="action-row">
+              <button class="primary-btn" id="btnChangePassword" type="button">Cambiar contraseña</button>
             </div>
           </div>
         </div>
@@ -378,6 +409,6 @@
   </div>
 
   <div class="toast-stack" id="toastStack"></div>
-  <script src="./assets/app-main.js?v=v58-persistent-gear"></script>
+  <script src="/assets/app-main.js?v=v75-descontinuados"></script>
 </body>
 </html>
